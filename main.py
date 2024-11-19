@@ -1,38 +1,56 @@
-# Necessary Imports
+# Imports
 from cmu_graphics import * # CMU Graphics
 import cv2 # Video Processing Library
 import shutil # For Deleting Files
 from PIL import Image # For Processing Images
 import os # For Creating and Modifying Files
-import time
+import time # For Using Time
+
+# openpose for pose estimation
+
 
 
 # contains app variables
 def onAppStart(app):
     setActiveScreen('main')
-    app.width = 1920
-    app.height = 1080
-    app.video_path = "hurdle.mov"
+    app.width = 1470
+    app.height = 956
+    app.paused = True
+
+    app.video_path = "hurdle.mov" # change to custom input
     app.capture = cv2.VideoCapture(app.video_path)
     if not app.capture.isOpened():
         print("error, video")
         exit()
     app.frames = int(app.capture.get(cv2.CAP_PROP_FRAME_COUNT))
     app.fps = app.capture.get(cv2.CAP_PROP_FPS)
+
     app.current_frame = 0
     app.td_time = 0
     app.time = 0
-    app.paused = True
     app.folder_path = "frames"
-    app.stepsPerSecond = 60
+    app.stepsPerSecond = 120
+    app.td_times = []
     # clearFolder(app)
     # readFrames(app)
     # testTime(app)
 
-
+# draws main screen
 def main_redrawAll(app):
-    drawLabel('poo',200,200)
+    drawImage('bg.png',0,0)
+    drawLabel('Hurdle Touchdown Time',80,80,size = 80,font = 'helvetica',align = 'left', fill = 'white')
+    drawLabel('Finder',200,160,size = 80,font = 'helvetica',align = 'left', fill = 'white')
+    main_drawButtons(app)
 
+def main_drawButtons(app):
+    drawRect(1120,756,250,80,fill = 'white',border = 'black')
+    drawRect(1120,656,250,80,fill = 'white',border = 'black')
+    drawRect(1120,556,250,80,fill = 'white',border = 'black')
+    pass
+
+# switches to main screen
+def main_onMousePress(app,x,y):
+    setActiveScreen('video')
 
 # iterates through the frames
 def video_onStep(app):
@@ -64,6 +82,9 @@ def video_onKeyPress(app,key):
                 app.td_time = findTime(app)
             else:
                 findTDTime(app)
+        elif key == 'backspace':
+            if len(app.td_times) > 0:
+                app.td_times.pop()
         findTime(app)
     else:
         pass
@@ -73,40 +94,57 @@ def video_redrawAll(app):
     drawFrame(app,getFrame(app))
     drawTimes(app)
 
-#
+## other methods ##
+
+# finds the current time in the video using the current frame and the fps
 def findTime(app):
     current_time = app.current_frame/app.fps
     seconds = pythonRound(current_time % 60,2)
     app.time = seconds
     return seconds
 
+# finds the current touchdown time split
 def findTDTime(app):
     time = findTime(app) - app.td_time
     app.td_time = time
+    app.td_times.append(f'{time:.2f}')
+    app.td_time = 0
     return time
 
+# draws the times
 def drawTimes(app):
-    drawRect(20,10,40,20,fill='gray')
-    drawLabel(f'{app.time:.2f}',20,10,fill='white',size = 20)
-    drawRect(20,40,40,20,fill='gray')
-    drawLabel(f'{app.td_time:.2f}',20,40,fill='white',size = 20)
+    drawRect(20,0,40,20,fill='gray')
+    drawLabel(f'{app.time:.2f}',20,10,fill='white',size = 20, align = 'left')
+    drawRect(20,30,40,20,fill='gray')
+    drawLabel(f'{app.td_time:.2f}',20,40,fill='white',size = 20, align = 'left')
+    if len(app.td_times) > 0:
+        for i in range(len(app.td_times)):
+            drawRect(20+ 50 * i,60,40,20,fill='gray')
+            drawLabel(f'{app.td_times[i]}',20 + 50 * i,70,fill='white',size = 20, align = 'left')
+            
 
-
+# gets the current frame of the video
 def getFrame(app):
     app.capture.set(cv2.CAP_PROP_POS_FRAMES,app.current_frame)
     ret, frame = app.capture.read()
+    if not ret:
+        print('unable to read frame')
+    cv2.imwrite('frame.jpg',frame)
+    # cv2.imshow('Frame',frame)
     return frame
 
+# draws the current frame
 def drawFrame(app,img):
-    drawImage(f"frames/{app.current_frame}.bmp",0,0)
-    pass
-
+    drawImage('frame.jpg',0,0)
+    
+# tests how long it takes to readFrames
 def testTime(app):
     start = time.time()
     readFrames(app)
     end = rounded(time.time() - start)
     print(end)
 
+#reads all frames in the video
 def readFrames(app):
     os.makedirs(app.folder_path,exist_ok=True)
     cnt = 0
@@ -119,6 +157,7 @@ def readFrames(app):
         cnt +=1
         app.frames = cnt
 
+# deletes frames from the 'frames' folder
 def clearFolder(app):
     folder_path = app.folder_path
     if os.path.exists(folder_path):
