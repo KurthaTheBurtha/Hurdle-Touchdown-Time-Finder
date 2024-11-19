@@ -7,7 +7,11 @@ import os # For Creating and Modifying Files
 import time
 
 
+# contains app variables
 def onAppStart(app):
+    setActiveScreen('main')
+    app.width = 1920
+    app.height = 1080
     app.video_path = "hurdle.mov"
     app.capture = cv2.VideoCapture(app.video_path)
     if not app.capture.isOpened():
@@ -19,15 +23,19 @@ def onAppStart(app):
     app.td_time = 0
     app.time = 0
     app.paused = True
-    app.width = 1920
-    app.height = 1080
     app.folder_path = "frames"
     app.stepsPerSecond = 60
     # clearFolder(app)
-    readFrames(app)
+    # readFrames(app)
     # testTime(app)
 
-def onStep(app):
+
+def main_redrawAll(app):
+    drawLabel('poo',200,200)
+
+
+# iterates through the frames
+def video_onStep(app):
     if app.paused:
         pass
     else:
@@ -36,7 +44,8 @@ def onStep(app):
             app.current_frame -= 1
     findTime(app)
 
-def onKeyPress(app,key):
+# controls the key presses in the app
+def video_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'p':
@@ -59,11 +68,12 @@ def onKeyPress(app,key):
     else:
         pass
 
-def redrawAll(app):
-    # drawLabel('poo',200,200)
+# draws video
+def video_redrawAll(app):
     drawFrame(app,getFrame(app))
     drawTimes(app)
 
+#
 def findTime(app):
     current_time = app.current_frame/app.fps
     seconds = pythonRound(current_time % 60,2)
@@ -122,7 +132,6 @@ def onClose(app):
 
 
 def main():
-    runApp()
+    runAppWithScreens('main')
 
 main()
-# cmu_graphics.run()
