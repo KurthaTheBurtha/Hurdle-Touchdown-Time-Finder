@@ -5,6 +5,7 @@ import shutil # For Deleting Files
 from PIL import Image # For Processing Images
 import os # For Creating and Modifying Files
 import time # For Using Time
+from button import Button # Button Class
 
 # openpose for pose estimation
 
@@ -31,26 +32,74 @@ def onAppStart(app):
     app.folder_path = "frames"
     app.stepsPerSecond = 120
     app.td_times = []
-    # clearFolder(app)
-    # readFrames(app)
-    # testTime(app)
+
+    app.buttons = [Button('Library',1120,756,250,80),
+                   Button('Athletes',1120,656,250,80),
+                   Button('Strategize',1120,556,250,80),
+                   Button('Back',1120,app.height*0.1-40,250,80),
+                   Button('Video',200,200,250,80)]
 
 # draws main screen
 def main_redrawAll(app):
     drawImage('bg.png',0,0)
     drawLabel('Hurdle Touchdown Time',80,80,size = 80,font = 'helvetica',align = 'left', fill = 'white')
     drawLabel('Finder',200,160,size = 80,font = 'helvetica',align = 'left', fill = 'white')
-    main_drawButtons(app)
+    for i in range(3):
+        drawButton(app,i)
+    # main_drawButtons(app)
 
-def main_drawButtons(app):
-    drawRect(1120,756,250,80,fill = 'white',border = 'black')
-    drawRect(1120,656,250,80,fill = 'white',border = 'black')
-    drawRect(1120,556,250,80,fill = 'white',border = 'black')
-    pass
+# draws a button
+def drawButton(app,i):
+    b = app.buttons[i]
+    drawRect(b.tx,b.ty,b.w,b.h,fill = 'white', border = 'black')
+    mx,my = b.midpoint()
+    drawLabel(b.name,mx,my,font = 'helvetica',size = 20)
 
-# switches to main screen
+def drawHeader(app,title):
+    drawRect(0,0,app.width,app.height*0.2,fill='red',border = 'black')
+    drawLabel(title,app.width/2,app.height*0.1,fill='black',font = 'helvetica',size = 80)
+
+# switches to appropriate screens when buttons are pressed
 def main_onMousePress(app,x,y):
-    setActiveScreen('video')
+    for i in range(3):
+        b = app.buttons[i]
+        if b.inButton(x,y):
+            setActiveScreen(b.name.lower())
+
+# controls the main screen
+def main_onKeyPress(app,key):
+    if key == 'q':
+        onClose(app)
+
+# Library
+def library_redrawAll(app):
+    drawHeader(app,'Library')
+    drawButton(app,3)
+    drawButton(app,4)
+
+def library_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('main')
+    if app.buttons[4].inButton(x,y):
+        setActiveScreen('video')
+
+# Athletes
+def athletes_redrawAll(app):
+    drawHeader(app,'Athletes')
+    drawButton(app,3)
+
+def athletes_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('main')
+
+# Strategize
+def strategize_redrawAll(app):
+    drawHeader(app,'Strategize')
+    drawButton(app,3)
+
+def strategize_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('main')
 
 # iterates through the frames
 def video_onStep(app):
