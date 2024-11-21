@@ -33,9 +33,9 @@ def onAppStart(app):
     app.stepsPerSecond = 120
     app.td_times = []
 
-    app.buttons = [Button('Library',1120,756,250,80),
+    app.buttons = [Button('Library',1120,556,250,80),
                    Button('Athletes',1120,656,250,80),
-                   Button('Strategize',1120,556,250,80),
+                   Button('Strategize',1120,756,250,80),
                    Button('Back',1120,app.height*0.1-40,250,80),
                    Button('Video',200,200,250,80)]
 
@@ -70,6 +70,8 @@ def main_onMousePress(app,x,y):
 def main_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
+    if key == 'v': # switch to video
+        setActiveScreen('video')
 
 # Library
 def library_redrawAll(app):
@@ -83,6 +85,12 @@ def library_onMousePress(app,x,y):
     if app.buttons[4].inButton(x,y):
         setActiveScreen('video')
 
+def library_onKeyPress(app,key):
+    if key == 'q':
+        onClose(app)
+    if key == 'escape':
+        setActiveScreen('main')
+
 # Athletes
 def athletes_redrawAll(app):
     drawHeader(app,'Athletes')
@@ -90,6 +98,12 @@ def athletes_redrawAll(app):
 
 def athletes_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
+        setActiveScreen('main')
+
+def athletes_onKeyPress(app,key):
+    if key == 'q':
+        onClose(app)
+    if key == 'escape':
         setActiveScreen('main')
 
 # Strategize
@@ -100,6 +114,14 @@ def strategize_redrawAll(app):
 def strategize_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
+
+def strategize_onKeyPress(app,key):
+    if key == 'q':
+        onClose(app)
+    if key == 'escape':
+        setActiveScreen('main')
+
+# Video
 
 # iterates through the frames
 def video_onStep(app):
@@ -117,6 +139,8 @@ def video_onKeyPress(app,key):
         onClose(app)
     if key == 'p':
         app.paused = not app.paused
+    if key == 'escape':
+        setActiveScreen('library')
     if app.paused:
         if key == 'a':
             app.current_frame -= 1
@@ -135,13 +159,26 @@ def video_onKeyPress(app,key):
             if len(app.td_times) > 0:
                 app.td_times.pop()
         findTime(app)
-    else:
-        pass
+
+def video_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('library')
 
 # draws video
 def video_redrawAll(app):
     drawFrame(app,getFrame(app))
     drawTimes(app)
+    drawButton(app,3)
+
+# draws the time
+def drawTimes(app):
+    drawRect(app.width/2-60,app.height*0.92,120,40,fill='white',border = 'black')
+    drawLabel(f'{app.time:.2f}',app.width/2,app.height*0.92+20,fill='black',size = 20)
+    drawRect(app.width/2-60,app.height*0.1-20,120,40,fill='white',border = 'black')
+    drawLabel(f'{app.td_time:.2f}',app.width/2,app.height*0.1,fill='black',size = 20)
+    for i in range(len(app.td_times)):
+        drawRect(0,0+80*i,80,80,fill='white',border = 'black')
+        drawLabel(f'{app.td_times[i]}',40,40+80*i,fill='black',size = 20)
 
 ## other methods ##
 
@@ -159,17 +196,6 @@ def findTDTime(app):
     app.td_times.append(f'{time:.2f}')
     app.td_time = 0
     return time
-
-# draws the times
-def drawTimes(app):
-    drawRect(20,0,40,20,fill='gray')
-    drawLabel(f'{app.time:.2f}',20,10,fill='white',size = 20, align = 'left')
-    drawRect(20,30,40,20,fill='gray')
-    drawLabel(f'{app.td_time:.2f}',20,40,fill='white',size = 20, align = 'left')
-    if len(app.td_times) > 0:
-        for i in range(len(app.td_times)):
-            drawRect(20+ 50 * i,60,40,20,fill='gray')
-            drawLabel(f'{app.td_times[i]}',20 + 50 * i,70,fill='white',size = 20, align = 'left')
             
 
 # gets the current frame of the video
@@ -179,7 +205,6 @@ def getFrame(app):
     if not ret:
         print('unable to read frame')
     cv2.imwrite('frame.jpg',frame)
-    # cv2.imshow('Frame',frame)
     return frame
 
 # draws the current frame
