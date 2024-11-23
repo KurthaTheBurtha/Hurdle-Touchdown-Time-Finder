@@ -144,6 +144,20 @@ def video_onKeyPress(app,key):
         app.paused = not app.paused
     if key == 'escape':
         setActiveScreen('library')
+    if key == 't':
+        if app.td_time == 0:
+            app.td_time = findTime(app)
+        else:
+            findTDTime(app)
+        app.recording = not app.recording
+    if key == 'backspace':
+        if len(app.td_times) > 0:
+            app.td_times.pop()
+            app.cum_times.pop()
+    if key == 'r':
+        app.current_frame = 0
+        app.td_times = []
+        app.cum_times = []
     if app.paused:
         if key == 'a':
             app.current_frame -= 1
@@ -153,17 +167,6 @@ def video_onKeyPress(app,key):
             app.current_frame += 1
             if app.current_frame >= app.frames:
                 app.current_frame -= 1
-        elif key == 't':
-            if app.td_time == 0:
-                app.td_time = findTime(app)
-            else:
-                findTDTime(app)
-            app.recording = not app.recording
-        elif key == 'backspace':
-            if len(app.td_times) > 0:
-                app.td_times.pop()
-        elif key == 'r':
-            app.current_frame = 0
         findTime(app)
 
 def video_onMousePress(app,x,y):
@@ -194,10 +197,8 @@ def drawTimes(app):
         drawRect(boxh,0+boxh*i,20,boxh,fill='white',border='black')
         drawLabel(f'{i}',boxh+10,boxh//2 + boxh*i,fill = 'black',size = 20)
         # cumulative time
-        # drawRect(boxh+20,0+boxh*i,boxh,boxh,fill='white',border='black')
-
-        # s = sum(app.td_times[:i+1])
-        # drawLabel(f'{s}',boxh+20 + boxh//2,boxh//2+boxh*i)
+        drawRect(boxh+20,0+boxh*i,boxh,boxh,fill='white',border='black')
+        drawLabel(f'{app.cum_times[i]:.2f}',boxh+20 + boxh//2,boxh//2+boxh*i,fill='black',size=20)
         
 
 ## other methods ##
@@ -214,11 +215,13 @@ def findTDTime(app):
     time = findTime(app) - app.td_time
     app.td_time = time
     app.td_times.append(f'{time:.2f}')
-    # app.cum_times.append()
+    if len(app.cum_times) == 0:
+        app.cum_times.append(time)
+    else:
+        app.cum_times.append(app.cum_times[-1]+time)
     app.td_time = 0
     return time
 
-# def preSumCumTimes(app):
 
 # gets the current frame of the video
 def getFrame(app):
