@@ -3,9 +3,10 @@ import shutil  # For Deleting Files
 import time  # For Using Time
 from PIL import Image as im
 import cv2  # Video Processing Library
-import numpy as np # NumPy
 from button import Button  # Button Class
+from video import Video # Video Class
 from cmu_graphics import *  # CMU Graphics
+import os # For the File Explorer
 
 
 # openpose for pose estimation
@@ -39,8 +40,16 @@ def onAppStart(app):
     app.buttons = [Button('Library',1120,556,250,80),
                    Button('Athletes',1120,656,250,80),
                    Button('Strategize',1120,756,250,80),
-                   Button('Back',1120,app.height*0.1-40,250,80),
-                   Button('Video',200,200,250,80)]
+                   Button('Back',1120,app.height*0.1-30,250,60),
+                   Button('Video',200,200,250,80),
+                   Button('Upload',100,app.height*0.1-30,250,60)]
+    app.videos = [Video('hurdle','hurdle.mov'),Video('ryan','ryan.mov')]
+    for vid in app.videos:
+        vid.setThumbnail()
+        vid.findLength()
+
+    app.curdir = os.getcwd()
+    app.files = []
 
 # draws main screen
 def main_redrawAll(app):
@@ -59,7 +68,7 @@ def drawButton(app,i):
     drawLabel(b.name,mx,my,font = 'helvetica',size = 20)
 
 def drawHeader(app,title):
-    drawRect(0,0,app.width,app.height*0.2,fill='red',border = 'black')
+    drawRect(0,0,app.width,app.height*0.2,fill='pink',border = 'black')
     drawLabel(title,app.width/2,app.height*0.1,fill='black',font = 'helvetica',size = 80)
 
 # switches to appropriate screens when buttons are pressed
@@ -75,24 +84,90 @@ def main_onKeyPress(app,key):
         onClose(app)
     if key == 'v': # switch to video
         setActiveScreen('video')
+    if key == 'u':
+        setActiveScreen('upload')
+        getFiles(app)
 
 # Library
 def library_redrawAll(app):
     drawHeader(app,'Library')
     drawButton(app,3)
-    drawButton(app,4)
+    drawButton(app,5)
+    drawVideos(app)
+
+def drawVideos(app):
+    topX = 200
+    topY = 200
+    cnt = 1
+    # for tx in range(topX,1270,1270/3):
+    #     pass
+    pass
+
 
 def library_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
-    if app.buttons[4].inButton(x,y):
-        setActiveScreen('video')
+    if app.buttons[5].inButton(x,y):
+        setActiveScreen('upload')
+        getFiles(app)
 
 def library_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'escape':
         setActiveScreen('main')
+
+def upload_redrawAll(app):
+    drawHeader(app, 'Upload')
+    drawButton(app, 3)
+    drawFileExplorer(app)
+
+def upload_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('main')
+    for file in app.files:
+        if file.inButton(x,y):
+            nextdir = app.curdir + '/' + file.name
+            if os.path.isdir(nextdir):
+                app.curdir += '/' + file.name
+                getFiles(app)
+            else:
+                pass # do something with the file
+            break
+
+def upload_onKeyPress(app,key):
+    if key == 'q':
+        onClose(app)
+    if key == 'escape':
+        setActiveScreen('library')
+        app.curdir = os.getcwd()
+    if key == 'backspace':
+        goBack(app)
+        getFiles(app)
+
+def goBack(app):
+    app.curdir = os.path.dirname(app.curdir)
+
+def drawFileExplorer(app):
+    drawLabel(f'{app.curdir}',app.width*0.2,app.height*0.25-20,size = 20, font = 'helvetica', align = 'left')
+    drawRect(app.width*0.2,app.height*0.25,app.width*0.6,app.height*0.70,fill=None,border='black')
+    for file in app.files:
+        drawFile(app,file)
+
+def drawFile(app,button):
+    b = button
+    drawRect(b.tx,b.ty,b.w,b.h,fill=None,border='black')
+    drawLabel(b.name,b.tx,b.ty+9,align = 'left',font = 'helvetica',size = 18)
+
+def getFiles(app):
+    files = os.listdir(app.curdir)
+    cnt = 0
+    app.files = []
+    for file in files:
+        button = Button(file, app.width * 0.2, app.height * 0.25 + cnt * 20, app.width * 0.6, 20)
+        cnt += 1
+        app.files.append(button)
+    return app.files
 
 # Athletes
 def athletes_redrawAll(app):
@@ -237,7 +312,13 @@ def getFrame(app):
 # draws the current frame
 def drawFrame(app,img):
     drawImage(img,0,0)
-    
+
+
+# adds a video to the library
+def addVideo(app):
+    pass
+
+
 # tests how long it takes to readFrames
 def testTime(app):
     start = time.time()
