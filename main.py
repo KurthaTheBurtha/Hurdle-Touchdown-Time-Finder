@@ -157,7 +157,7 @@ def drawFileExplorer(app):
 def drawFile(app,button):
     b = button
     drawRect(b.tx,b.ty,b.w,b.h,fill=None,border='black')
-    drawLabel(b.name,b.tx,b.ty+9,align = 'left',font = 'helvetica',size = 18)
+    drawLabel(b.name,b.tx + 5,b.ty+9,align = 'left',font = 'helvetica',size = 18)
 
 def getFiles(app):
     files = os.listdir(app.curdir)
