@@ -15,11 +15,14 @@ import os # For the File Explorer
 
 # contains app variables
 def onAppStart(app):
+    # main screen
     setActiveScreen('main')
     app.width = 1470
     app.height = 956
     app.paused = True
+    app.stepsPerSecond = 120
 
+    # Video Recording
     app.video_path = "hurdle.mov" # change to custom input
     app.capture = cv2.VideoCapture(app.video_path)
     if not app.capture.isOpened():
@@ -28,32 +31,34 @@ def onAppStart(app):
     app.frames = int(app.capture.get(cv2.CAP_PROP_FRAME_COUNT))
     app.fps = app.capture.get(cv2.CAP_PROP_FPS)
 
+    # Video Screen
     app.current_frame = 0
     app.td_time = 0
     app.time = 0
-    app.folder_path = "frames"
-    app.stepsPerSecond = 120
     app.td_times = []
     app.cum_times = []
     app.recording = False
+    # app.folder_path = "frames"
 
+    # Videos
     app.buttons = [Button('Library',1120,556,250,80),
                    Button('Athletes',1120,656,250,80),
                    Button('Strategize',1120,756,250,80),
                    Button('Back',1120,app.height*0.1-30,250,60),
                    Button('Video',200,200,250,80),
                    Button('Upload',100,app.height*0.1-30,250,60)]
-    app.videos = [Video('hurdle','hurdle.mov'),Video('ryan','ryan.mov')]
-    for vid in app.videos:
-        vid.setThumbnail()
-        vid.findLength()
+    app.videos = []
 
+    # File Explorer
     app.curdir = os.getcwd()
     app.files = []
+    app.uploaded = False
+
+
 
 # draws main screen
 def main_redrawAll(app):
-    drawImage('bg.png',0,0)
+    drawImage('assets/bg.png',0,0)
     drawLabel('Hurdle Touchdown Time',80,80,size = 80,font = 'helvetica',align = 'left', fill = 'white')
     drawLabel('Finder',200,160,size = 80,font = 'helvetica',align = 'left', fill = 'white')
     for i in range(3):
@@ -96,12 +101,21 @@ def library_redrawAll(app):
     drawVideos(app)
 
 def drawVideos(app):
-    topX = 200
-    topY = 200
-    cnt = 1
-    # for tx in range(topX,1270,1270/3):
-    #     pass
-    pass
+    topX = app.width*0.05
+    topY = app.height*0.25
+    for video in app.videos:
+        video.thumbnail.thumbnail((app.width*0.8/3,app.width*0.8/3))
+        size = video.thumbnail.size
+        ix, iy = size
+        cmu_image = CMUImage(video.thumbnail)
+        drawImage(cmu_image,topX,topY)
+        drawLabel(video.name,topX,topY + iy+20,align = 'left',font = 'helvetica')
+        drawLabel(video.length,topX + ix,topY+iy+20, align = 'right', font = 'helvetica')
+        topX += ix + app.width*0.05
+        if topX > app.width:
+            topX = app.width * 0.05
+            topY += iy * app.height * 0.05
+
 
 
 def library_onMousePress(app,x,y):
@@ -120,19 +134,29 @@ def library_onKeyPress(app,key):
 def upload_redrawAll(app):
     drawHeader(app, 'Upload')
     drawButton(app, 3)
-    drawFileExplorer(app)
+    if not app.uploaded:
+        drawFileExplorer(app)
+    else:
+        drawSuccess(app)
 
 def upload_onMousePress(app,x,y):
-    if app.buttons[3].inButton(x,y):
-        setActiveScreen('main')
+    if app.buttons[3].inButton(x,y) or app.uploaded:
+        setActiveScreen('library')
+        app.curdir = os.getcwd()
+        app.uploaded = False
     for file in app.files:
         if file.inButton(x,y):
             nextdir = app.curdir + '/' + file.name
             if os.path.isdir(nextdir):
                 app.curdir += '/' + file.name
                 getFiles(app)
-            else:
-                pass # do something with the file
+            elif is_video_file(app.curdir + '/' + file.name):
+                v = Video(app.curdir + '/' + file.name,file.name)
+                v.findLength()
+                v.setThumbnail()
+                app.videos.append(v)
+                app.uploaded = True
+                print(app.videos)
             break
 
 def upload_onKeyPress(app,key):
@@ -141,6 +165,7 @@ def upload_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('library')
         app.curdir = os.getcwd()
+        app.uploaded = False
     if key == 'backspace':
         goBack(app)
         getFiles(app)
@@ -153,11 +178,25 @@ def drawFileExplorer(app):
     drawRect(app.width*0.2,app.height*0.25,app.width*0.6,app.height*0.70,fill=None,border='black')
     for file in app.files:
         drawFile(app,file)
+        if os.path.isdir(app.curdir + '/' + file.name):
+            drawImage('assets/folder.png',file.tx+2,file.ty)
+        elif is_video_file(app.curdir + '/' + file.name):
+            drawImage('assets/video.png',file.tx+2,file.ty)
+
+def drawSuccess(app):
+    drawLabel('Success!', app.width/2,app.height/2,size = 40, font = 'helvetica', fill = 'lightgreen')
+    drawLabel(f'{app.videos[-1].name} was uploaded to library', app.width/2,app.height/2+50,size = 30, font = 'helvetica')
+
+# Checks whether filepath is a video - from ChatGPT
+def is_video_file(file_path):
+    VIDEO_EXTENSIONS = {".mp4", ".avi", ".mkv", ".mov", ".flv", ".wmv", ".webm"}
+    _, extension = os.path.splitext(file_path)  # Extract the file extension
+    return extension.lower() in VIDEO_EXTENSIONS
 
 def drawFile(app,button):
     b = button
     drawRect(b.tx,b.ty,b.w,b.h,fill=None,border='black')
-    drawLabel(b.name,b.tx + 5,b.ty+9,align = 'left',font = 'helvetica',size = 18)
+    drawLabel(b.name,b.tx + 25,b.ty+9,align = 'left',font = 'helvetica',size = 18)
 
 def getFiles(app):
     files = os.listdir(app.curdir)
@@ -312,12 +351,6 @@ def getFrame(app):
 # draws the current frame
 def drawFrame(app,img):
     drawImage(img,0,0)
-
-
-# adds a video to the library
-def addVideo(app):
-    pass
-
 
 # tests how long it takes to readFrames
 def testTime(app):

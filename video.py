@@ -3,14 +3,12 @@ from PIL import Image as im
 from cmu_graphics import *
 
 class Video:
-    def __init__(self,name,path):
+    def __init__(self,path,name):
         self.name = name
         self.path = path
         self.length = None
         self.thumbnail = None
-
-    def validatePath(self):
-        pass
+        self.times = None
 
     def __repr__(self):
         return f'Video: {self.name}, Path: {self.path}, Length: {self.length}, Thumbnail: {self.thumbnail}'
@@ -19,9 +17,13 @@ class Video:
         frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = cap.get(cv2.CAP_PROP_FPS)
         secs = frames/fps
-        min = secs//60
+        min = int(secs//60)
         sec = secs%60
-        length = f'{min}:{'0' + str(sec) if sec < 10 else sec}'
+        if sec < 10:
+            sec = '0' + f'{sec:.2f}'
+        else:
+            sec = f'{sec:.2f}'
+        length = f'{min}:{sec}'
         self.length = length
 
     def setThumbnail(self):
@@ -32,8 +34,10 @@ class Video:
             print('unable to read frame')
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pil_image = im.fromarray(frame)
-        cmu_image = CMUImage(pil_image)
-        self.thumbnail = cmu_image
+        self.thumbnail = pil_image
+
+    def rename(self,name):
+        self.name = name
 
 
 
