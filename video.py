@@ -11,7 +11,7 @@ class Video:
         self.times = None
 
     def __repr__(self):
-        return f'Video: {self.name}, Path: {self.path}, Length: {self.length}, Thumbnail: {self.thumbnail}'
+        return f'{self.name}'
     def findLength(self):
         cap = cv2.VideoCapture(self.path)
         frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))

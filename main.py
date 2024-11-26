@@ -103,7 +103,12 @@ def library_redrawAll(app):
 def drawVideos(app):
     topX = app.width*0.05
     topY = app.height*0.25
+    cnt = 0
     for video in app.videos:
+        if cnt >= 3:
+            cnt = 0
+            topX = app.width * 0.05
+            topY += iy + app.height * 0.05
         video.thumbnail.thumbnail((app.width*0.8/3,app.width*0.8/3))
         size = video.thumbnail.size
         ix, iy = size
@@ -112,9 +117,7 @@ def drawVideos(app):
         drawLabel(video.name,topX,topY + iy+20,align = 'left',font = 'helvetica')
         drawLabel(video.length,topX + ix,topY+iy+20, align = 'right', font = 'helvetica')
         topX += ix + app.width*0.05
-        if topX > app.width:
-            topX = app.width * 0.05
-            topY += iy * app.height * 0.05
+        cnt += 1
 
 
 
@@ -122,8 +125,9 @@ def library_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
     if app.buttons[5].inButton(x,y):
-        setActiveScreen('upload')
+        app.curdir = os.getcwd()
         getFiles(app)
+        setActiveScreen('upload')
 
 def library_onKeyPress(app,key):
     if key == 'q':
@@ -141,31 +145,32 @@ def upload_redrawAll(app):
 
 def upload_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y) or app.uploaded:
-        setActiveScreen('library')
         app.curdir = os.getcwd()
         app.uploaded = False
-    for file in app.files:
-        if file.inButton(x,y):
-            nextdir = app.curdir + '/' + file.name
-            if os.path.isdir(nextdir):
-                app.curdir += '/' + file.name
-                getFiles(app)
-            elif is_video_file(app.curdir + '/' + file.name):
-                v = Video(app.curdir + '/' + file.name,file.name)
-                v.findLength()
-                v.setThumbnail()
-                app.videos.append(v)
-                app.uploaded = True
-                print(app.videos)
-            break
+        setActiveScreen('library')
+    if app.uploaded == False:
+        for file in app.files:
+            if file.inButton(x,y):
+                nextdir = app.curdir + '/' + file.name
+                if os.path.isdir(nextdir):
+                    app.curdir += '/' + file.name
+                    getFiles(app)
+                elif is_video_file(app.curdir + '/' + file.name):
+                    v = Video(app.curdir + '/' + file.name,file.name)
+                    v.findLength()
+                    v.setThumbnail()
+                    app.videos.append(v)
+                    app.uploaded = True
+                    print(app.videos)
+                break
 
 def upload_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'escape':
-        setActiveScreen('library')
         app.curdir = os.getcwd()
         app.uploaded = False
+        setActiveScreen('library')
     if key == 'backspace':
         goBack(app)
         getFiles(app)
