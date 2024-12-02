@@ -1,3 +1,4 @@
+import copy
 class Button():
     def __init__(self,name,tx,ty,w,h):
         self.name = name
@@ -18,3 +19,9 @@ class Button():
 
     def assignAthlete(self,athlete):
         self.athlete = athlete
+
+    def rename(self,name):
+        self.name = name
+
+    def copy(self):
+        return copy.deepcopy(self)

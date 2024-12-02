@@ -39,6 +39,7 @@ def onAppStart(app):
     app.td_times = []
     app.cum_times = []
     app.recording = False
+    app.fromwhere = 'library'
     # app.folder_path = "frames"
 
     # Videos
@@ -164,6 +165,7 @@ def library_onMousePress(app,x,y):
             app.td_times = []
             app.cum_times = []
             app.recording = False
+            app.fromwhere = 'library'
             setActiveScreen('video')
 
 def library_onKeyPress(app,key):
@@ -347,6 +349,27 @@ def drawAthleteVideos(app):
 def athletesVideos_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('athletes')
+    for i in range(len(app.athletes)):
+        if app.activeAthlete == app.athletes[i].name:
+            buttons = app.athletes[i].videobuttons
+            break
+    for i in range(len(buttons)):
+        if buttons[i].inButton(x,y):
+            app.video_path = buttons[i].name  # change to custom input
+            app.capture = cv2.VideoCapture(app.video_path)
+            if not app.capture.isOpened():
+                print("error, video")
+                exit()
+            app.frames = int(app.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+            app.fps = app.capture.get(cv2.CAP_PROP_FPS)
+            app.current_frame = 0
+            app.td_time = 0
+            app.time = 0
+            app.td_times = []
+            app.cum_times = []
+            app.recording = False
+            app.fromwhere = 'athletes'
+            setActiveScreen('video')
 
 def athletesVideos_onKeyPress(app,key):
     if key == 'escape':
@@ -418,7 +441,9 @@ def athletesEditVideos_onMousePress(app,x,y):
         if button.inButton(x,y):
             for i in range(len(app.athletes)):
                 if app.athletes[i].name == app.activeAthlete:
-                    app.athletes[i].addVideo(app.videos[findVideo(app,app.activeAthlete)],app.videobuttons[len(app.athletes[i].videos)])
+                    b = app.videobuttons[len(app.athletes[i].videos)].copy()
+                    b.rename(button.name)
+                    app.athletes[i].addVideo(app.videos[findVideo(app,app.activeAthlete)],b)
                     setActiveScreen('athletes')
 
 def athletesEditVideos_onKeyPress(app,key):
@@ -435,10 +460,14 @@ def findVideo(app,name):
 def strategize_redrawAll(app):
     drawHeader(app,'Strategize')
     drawButton(app,3)
+    drawVideos(app)
 
 def strategize_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
+    for button in app.videobuttons:
+        if button.inButton(x,y):
+            pass # strategize
 
 def strategize_onKeyPress(app,key):
     if key == 'q':
@@ -465,7 +494,10 @@ def video_onKeyPress(app,key):
     if key == 'p':
         app.paused = not app.paused
     if key == 'escape':
-        setActiveScreen('library')
+        if app.fromwhere == 'library':
+            setActiveScreen('library')
+        else:
+            setActiveScreen('athletesVideos')
     if key == 't':
         if app.td_time == 0:
             app.td_time = findTime(app)
@@ -482,7 +514,7 @@ def video_onKeyPress(app,key):
         app.cum_times = []
     if key == 'v':
         for i in range(len(app.videos)):
-            if app.videos[i].path == app.videopath:
+            if app.videos[i].path == app.video_path:
                 app.videos[i].addTimes(app.td_times,app.cum_times)
                 break
 
@@ -500,7 +532,10 @@ def video_onKeyPress(app,key):
 
 def video_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
-        setActiveScreen('library')
+        if app.fromwhere == 'library':
+            setActiveScreen('library')
+        else:
+            setActiveScreen('athletesVideos')
 
 # draws video
 def video_redrawAll(app):
