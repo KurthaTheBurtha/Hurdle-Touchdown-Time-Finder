@@ -64,6 +64,7 @@ def onAppStart(app):
 
     # Athletes
     app.athletes = []
+    app.athletebuttons = []
     app.setprs = []
     app.editvideos = []
     app.ax, app.ay = app.width * 0.05, app.height * 0.25
@@ -301,6 +302,15 @@ def athletes_onMousePress(app,x,y):
             app.input = ''
             app.activeAthlete = app.athletes[i].name
             setActiveScreen('athletesSetPr')
+            return
+        if app.editvideos[i].inButton(x,y):
+            app.activeAthlete = app.athletes[i].name
+            setActiveScreen('athletesEditVideos')
+            return
+    for i in range(len(app.athletebuttons)):
+        if app.athletebuttons[i].inButton(x,y):
+            app.activeAthlete = app.athletes[i].name
+            setActiveScreen('athletesVideos')
 
 def athletes_onKeyPress(app,key):
     if key == 'q':
@@ -308,6 +318,39 @@ def athletes_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('main')
 
+def athletesVideos_redrawAll(app):
+    drawHeader(app,f'{app.activeAthlete}\'s Videos')
+    drawButton(app,3)
+    drawAthleteVideos(app)
+
+def drawAthleteVideos(app):
+    for i in range(len(app.athletes)):
+        if app.athletes[i].name == app.activeAthlete:
+            videos = app.athletes[i].videos
+    topX = app.width * 0.05
+    topY = app.height * 0.25
+    cnt = 0
+    for video in videos:
+        if cnt >= 3:
+            cnt = 0
+            topX = app.width * 0.05
+            topY += iy + app.height * 0.05
+        video.thumbnail.thumbnail((app.width * 0.8 / 3, app.width * 0.8 / 3))
+        size = video.thumbnail.size
+        ix, iy = size
+        cmu_image = CMUImage(video.thumbnail)
+        drawImage(cmu_image, topX, topY)
+        drawLabel(video.name, topX, topY + iy + 20, align='left', font='helvetica')
+        drawLabel(video.length, topX + ix, topY + iy + 20, align='right', font='helvetica')
+        topX += ix + app.width * 0.05
+        cnt += 1
+def athletesVideos_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('athletes')
+
+def athletesVideos_onKeyPress(app,key):
+    if key == 'escape':
+        setActiveScreen('athletes')
 def athletesAdd_redrawAll(app):
     drawHeader(app,'Add Athlete')
     drawButton(app,3)
@@ -330,6 +373,9 @@ def athletesAdd_onKeyPress(app,key):
         b = Button('Edit Videos',app.ax + app.width * 0.5,app.ay+app.height * 0.05,app.width*0.15,app.height*0.05)
         b.assignAthlete(app.input)
         app.editvideos.append(b)
+        b = Button(app.input,app.ax,app.ay,app.width*0.9,app.height*0.15)
+        b.assignAthlete(app.input)
+        app.athletebuttons.append(b)
         app.ay += app.height * 0.17
         setActiveScreen('athletes')
     else:
@@ -343,7 +389,7 @@ def athletesSetPr_redrawAll(app):
     drawInput(app,'PR')
 def athletesSetPr_onMousePress(app,x,y):
     if app.buttons[3].inButton(x, y):
-        setActiveScreen('main')
+        setActiveScreen('athletes')
 def athletesSetPr_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('athletes')
@@ -361,13 +407,29 @@ def athletesSetPr_onKeyPress(app,key):
     else:
         app.input += key
 def athletesEditVideos_redrawAll(app):
-    pass
+    drawHeader(app,'Edit Videos')
+    drawButton(app,3)
+    drawVideos(app)
+
 def athletesEditVideos_onMousePress(app,x,y):
-    pass
+    if app.buttons[3].inButton(x, y):
+        setActiveScreen('athletes')
+    for button in app.videobuttons:
+        if button.inButton(x,y):
+            for i in range(len(app.athletes)):
+                if app.athletes[i].name == app.activeAthlete:
+                    app.athletes[i].addVideo(app.videos[findVideo(app,app.activeAthlete)],app.videobuttons[len(app.athletes[i].videos)])
+                    setActiveScreen('athletes')
+
 def athletesEditVideos_onKeyPress(app,key):
-    pass
+    if key == 'escape':
+        setActiveScreen('athletes')
 
-
+def findVideo(app,name):
+    for i in range(len(app.videos)):
+        if app.videos[i].name == name:
+            return i
+    return -1
 
 # Strategize
 def strategize_redrawAll(app):
