@@ -63,8 +63,13 @@ def onAppStart(app):
     app.uploaded = False
 
     # Athletes
-    app.athletes = [Athlete('Ryan'),Athlete('Kurt')]
-    app.edits = []
+    app.athletes = []
+    app.setprs = []
+    app.editvideos = []
+    app.ax, app.ay = app.width * 0.05, app.height * 0.25
+
+    # Text Input
+    app.input = ''
 
 
 
@@ -262,20 +267,33 @@ def athletes_redrawAll(app):
 
 def drawAthletes(app):
     topX, topY = app.width * 0.05, app.height * 0.25
-    for athlete in app.athletes:
+    for i in range(len(app.athletes)):
+        athlete = app.athletes[i]
         drawRect(topX,topY,app.width*0.9,app.height*0.15,fill=None,border = 'black')
         drawCircle(topX+app.width*0.075,topY + app.height*0.075,50,fill=None,border = 'black')
         drawLabel(athlete.name,topX + app.width * 0.125,topY + app.height * 0.05,size = 20, font = 'helvetica',align = 'left')
         plural = '' if len(athlete.videos) == 1 else 's'
         drawLabel(f'{len(athlete.videos)} video' + plural,topX + app.width * 0.125, topY + app.height * 0.1, size = 20, font = 'helvetica', align = 'left')
         drawLabel(f'{athlete.pr}',topX + app.width * 0.4,topY + app.height * 0.05, size = 20, font = 'helvetica', align = 'right')
+        drawAthleteButtons(app,i)
         topY += app.height*0.17
+
+def drawAthleteButtons(app,i):
+    s = app.setprs[i]
+    drawRect(s.tx,s.ty,s.w,s.h,fill = None, border = 'black')
+    mx,my = s.midpoint()
+    drawLabel(s.name,mx,my,size = 20, font = 'helvetica')
+    e = app.editvideos[i]
+    drawRect(e.tx,e.ty,e.w,e.h,fill = None, border = 'black')
+    mx,my = e.midpoint()
+    drawLabel(e.name,mx,my,size = 20, font = 'helvetica')
 
 
 def athletes_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
     if app.buttons[6].inButton(x,y):
+        app.input = ''
         setActiveScreen('athletesAdd')
 
 def athletes_onKeyPress(app,key):
@@ -285,7 +303,34 @@ def athletes_onKeyPress(app,key):
         setActiveScreen('main')
 
 def athletesAdd_redrawAll(app):
-    pass
+    drawHeader(app,'Add Athlete')
+    drawButton(app,3)
+    drawInput(app,'Athlete\'s name')
+
+def drawInput(app,name):
+    drawLabel(f'Please enter the {name}:',app.width/2,app.height*0.4,font = 'helvetica',size = 40)
+    drawLabel(app.input,app.width/2,app.height * 0.5, font = 'helvetica', size = 40)
+
+def athletesAdd_onKeyPress(app,key):
+    if key == 'escape':
+        setActiveScreen('athletes')
+    elif key == 'backspace':
+        app.input = app.input[:-1]
+    elif key == 'enter':
+        app.athletes.append(Athlete(app.input))
+        b = Button('Set PR',app.ax + app.width * 0.7,app.ay+app.height * 0.05,app.width*0.15,app.height*0.05)
+        b.assignAthlete(app.input)
+        app.setprs.append(b)
+        b = Button('Edit Videos',app.ax + app.width * 0.5,app.ay+app.height * 0.05,app.width*0.15,app.height*0.05)
+        b.assignAthlete(app.input)
+        app.editvideos.append(b)
+        app.ay += app.height * 0.17
+        setActiveScreen('athletes')
+    else:
+        app.input += key
+def athletesAdd_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('main')
 
 # Strategize
 def strategize_redrawAll(app):

@@ -5,6 +5,7 @@ class Button():
         self.ty = ty
         self.w = w
         self.h = h
+        self.athlete = None
 
     def __repr__(self):
         return f'{self.name}-({self.tx},{self.ty}) {self.w},{self.h}'
@@ -14,3 +15,6 @@ class Button():
     
     def midpoint(self):
         return (self.tx+self.w/2,self.ty+self.h/2)
+
+    def assignAthlete(self,athlete):
+        self.athlete = athlete
