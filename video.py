@@ -9,7 +9,13 @@ class Video:
         self.length = None
         self.thumbnail = None
         self.times = None
+    def inVideo(self,x,y):
+        return (self.tx <= x <= self.tx + self.w) and (self.ty <= y <= self.ty + self.h)
 
+    def __eq__(self,other):
+        return self.path == other.path
+    def __hash__(self):
+        return hash(str(self))
     def __repr__(self):
         return f'{self.name}'
     def findLength(self):

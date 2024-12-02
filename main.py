@@ -48,6 +48,12 @@ def onAppStart(app):
                    Button('Video',200,200,250,80),
                    Button('Upload',100,app.height*0.1-30,250,60)]
     app.videos = []
+    app.videobuttons = []
+    app.tx, app.ty = app.width * 0.05, app.height * 0.25
+    app.cnt = 0
+
+    # app.videorenames = []
+
 
     # File Explorer
     app.curdir = os.getcwd()
@@ -128,6 +134,22 @@ def library_onMousePress(app,x,y):
         app.curdir = os.getcwd()
         getFiles(app)
         setActiveScreen('upload')
+    for button in app.videobuttons:
+        if button.inButton(x,y):
+            app.video_path = button.name  # change to custom input
+            app.capture = cv2.VideoCapture(app.video_path)
+            if not app.capture.isOpened():
+                print("error, video")
+                exit()
+            app.frames = int(app.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+            app.fps = app.capture.get(cv2.CAP_PROP_FPS)
+            app.current_frame = 0
+            app.td_time = 0
+            app.time = 0
+            app.td_times = []
+            app.cum_times = []
+            app.recording = False
+            setActiveScreen('video')
 
 def library_onKeyPress(app,key):
     if key == 'q':
@@ -157,12 +179,43 @@ def upload_onMousePress(app,x,y):
                     getFiles(app)
                 elif is_video_file(app.curdir + '/' + file.name):
                     v = Video(app.curdir + '/' + file.name,file.name)
+                    if v in app.videos:
+                        break
                     v.findLength()
                     v.setThumbnail()
                     app.videos.append(v)
                     app.uploaded = True
-                    print(app.videos)
+                    v.thumbnail.thumbnail((app.width * 0.8 / 3, app.width * 0.8 / 3))
+                    size = v.thumbnail.size
+                    ix, iy = size
+                    app.videobuttons.append(Button(app.curdir + '/' + file.name,app.tx,app.ty,ix,iy))
+                    app.tx += ix + app.width * 0.05
+                    app.cnt += 1
+                    if app.cnt >= 3:
+                        app.cnt = 0
+                        app.tX = app.width * 0.05
+                        app.ty += iy + app.height * 0.05
                 break
+
+    # topX = app.width * 0.05
+    # topY = app.height * 0.25
+    # cnt = 0
+    # for video in app.videos:
+    #     if cnt >= 3:
+    #         cnt = 0
+    #         topX = app.width * 0.05
+    #         topY += iy + app.height * 0.05
+    #     video.thumbnail.thumbnail((app.width * 0.8 / 3, app.width * 0.8 / 3))
+    #     size = video.thumbnail.size
+    #     ix, iy = size
+    #     cmu_image = CMUImage(video.thumbnail)
+    #     drawImage(cmu_image, topX, topY)
+    #     drawLabel(video.name, topX, topY + iy + 20, align='left', font='helvetica')
+    #     drawLabel(video.length, topX + ix, topY + iy + 20, align='right', font='helvetica')
+    #     topX += ix + app.width * 0.05
+    #     cnt += 1
+
+
 
 def upload_onKeyPress(app,key):
     if key == 'q':
@@ -277,6 +330,8 @@ def video_onKeyPress(app,key):
         app.current_frame = 0
         app.td_times = []
         app.cum_times = []
+    if key == 'v':
+
     if app.paused:
         if key == 'a':
             app.current_frame -= 1
