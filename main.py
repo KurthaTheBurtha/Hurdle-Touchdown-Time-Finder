@@ -70,6 +70,7 @@ def onAppStart(app):
 
     # Text Input
     app.input = ''
+    app.activeAthlete = None
 
 
 
@@ -295,6 +296,11 @@ def athletes_onMousePress(app,x,y):
     if app.buttons[6].inButton(x,y):
         app.input = ''
         setActiveScreen('athletesAdd')
+    for i in range(len(app.setprs)):
+        if app.setprs[i].inButton(x,y):
+            app.input = ''
+            app.activeAthlete = app.athletes[i].name
+            setActiveScreen('athletesSetPr')
 
 def athletes_onKeyPress(app,key):
     if key == 'q':
@@ -331,6 +337,37 @@ def athletesAdd_onKeyPress(app,key):
 def athletesAdd_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
+def athletesSetPr_redrawAll(app):
+    drawHeader(app,'Set PR')
+    drawButton(app,3)
+    drawInput(app,'PR')
+def athletesSetPr_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x, y):
+        setActiveScreen('main')
+def athletesSetPr_onKeyPress(app,key):
+    if key == 'escape':
+        setActiveScreen('athletes')
+    elif key == 'backspace':
+        app.input = app.input[:-1]
+    elif key == 'enter':
+        if not app.input.replace('.','',1).isdigit():
+            app.input = ''
+        else:
+            for i in range(len(app.athletes)):
+                if app.activeAthlete == app.athletes[i].name:
+                    app.athletes[i].setPr(app.input)
+                    break
+            setActiveScreen('athletes')
+    else:
+        app.input += key
+def athletesEditVideos_redrawAll(app):
+    pass
+def athletesEditVideos_onMousePress(app,x,y):
+    pass
+def athletesEditVideos_onKeyPress(app,key):
+    pass
+
+
 
 # Strategize
 def strategize_redrawAll(app):

@@ -9,5 +9,4 @@ class Athlete:
             self.videos.append(video)
 
     def setPr(self,pr):
-        if pr.isnumeric():
-            self.pr = pr
+        self.pr = pr
