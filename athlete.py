@@ -1,9 +1,13 @@
 class Athlete:
-    def __int__(self,name):
+    def __init__(self,name):
         self.name = name
         self.videos = []
-        self.pr = None
+        self.pr = 'No PR set'
 
     def addVideo(self,video):
         if video not in self.videos:
             self.videos.append(video)
+
+    def setPr(self,pr):
+        if pr.isnumeric():
+            self.pr = pr

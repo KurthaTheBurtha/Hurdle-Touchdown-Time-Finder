@@ -9,15 +9,17 @@ class Video:
         self.length = None
         self.thumbnail = None
         self.times = None
+        self.cum_times = None
+
     def inVideo(self,x,y):
         return (self.tx <= x <= self.tx + self.w) and (self.ty <= y <= self.ty + self.h)
-
     def __eq__(self,other):
         return self.path == other.path
-    def __hash__(self):
-        return hash(str(self))
     def __repr__(self):
         return f'{self.name}'
+    def addTimes(self,td, cum):
+        self.times = td
+        self.cum_times = cum
     def findLength(self):
         cap = cv2.VideoCapture(self.path)
         frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))

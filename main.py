@@ -5,6 +5,7 @@ from PIL import Image as im
 import cv2  # Video Processing Library
 from button import Button  # Button Class
 from video import Video # Video Class
+from athlete import Athlete # Athlete Class
 from cmu_graphics import *  # CMU Graphics
 import os # For the File Explorer
 
@@ -46,7 +47,8 @@ def onAppStart(app):
                    Button('Strategize',1120,756,250,80),
                    Button('Back',1120,app.height*0.1-30,250,60),
                    Button('Video',200,200,250,80),
-                   Button('Upload',100,app.height*0.1-30,250,60)]
+                   Button('Upload',100,app.height*0.1-30,250,60),
+                   Button('Add New',100,app.height*0.1-30,350,60)]
     app.videos = []
     app.videobuttons = []
     app.tx, app.ty = app.width * 0.05, app.height * 0.25
@@ -59,6 +61,10 @@ def onAppStart(app):
     app.curdir = os.getcwd()
     app.files = []
     app.uploaded = False
+
+    # Athletes
+    app.athletes = [Athlete('Ryan'),Athlete('Kurt')]
+    app.edits = []
 
 
 
@@ -95,6 +101,8 @@ def main_onKeyPress(app,key):
         onClose(app)
     if key == 'v': # switch to video
         setActiveScreen('video')
+    if key == 'a':
+        setActiveScreen('athletes')
     if key == 'u':
         setActiveScreen('upload')
         getFiles(app)
@@ -196,27 +204,6 @@ def upload_onMousePress(app,x,y):
                         app.tX = app.width * 0.05
                         app.ty += iy + app.height * 0.05
                 break
-
-    # topX = app.width * 0.05
-    # topY = app.height * 0.25
-    # cnt = 0
-    # for video in app.videos:
-    #     if cnt >= 3:
-    #         cnt = 0
-    #         topX = app.width * 0.05
-    #         topY += iy + app.height * 0.05
-    #     video.thumbnail.thumbnail((app.width * 0.8 / 3, app.width * 0.8 / 3))
-    #     size = video.thumbnail.size
-    #     ix, iy = size
-    #     cmu_image = CMUImage(video.thumbnail)
-    #     drawImage(cmu_image, topX, topY)
-    #     drawLabel(video.name, topX, topY + iy + 20, align='left', font='helvetica')
-    #     drawLabel(video.length, topX + ix, topY + iy + 20, align='right', font='helvetica')
-    #     topX += ix + app.width * 0.05
-    #     cnt += 1
-
-
-
 def upload_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
@@ -270,16 +257,35 @@ def getFiles(app):
 def athletes_redrawAll(app):
     drawHeader(app,'Athletes')
     drawButton(app,3)
+    drawButton(app,6)
+    drawAthletes(app)
+
+def drawAthletes(app):
+    topX, topY = app.width * 0.05, app.height * 0.25
+    for athlete in app.athletes:
+        drawRect(topX,topY,app.width*0.9,app.height*0.15,fill=None,border = 'black')
+        drawCircle(topX+app.width*0.075,topY + app.height*0.075,50,fill=None,border = 'black')
+        drawLabel(athlete.name,topX + app.width * 0.125,topY + app.height * 0.05,size = 20, font = 'helvetica',align = 'left')
+        plural = '' if len(athlete.videos) == 1 else 's'
+        drawLabel(f'{len(athlete.videos)} video' + plural,topX + app.width * 0.125, topY + app.height * 0.1, size = 20, font = 'helvetica', align = 'left')
+        drawLabel(f'{athlete.pr}',topX + app.width * 0.4,topY + app.height * 0.05, size = 20, font = 'helvetica', align = 'right')
+        topY += app.height*0.17
+
 
 def athletes_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
+    if app.buttons[6].inButton(x,y):
+        setActiveScreen('athletesAdd')
 
 def athletes_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'escape':
         setActiveScreen('main')
+
+def athletesAdd_redrawAll(app):
+    pass
 
 # Strategize
 def strategize_redrawAll(app):
@@ -331,6 +337,11 @@ def video_onKeyPress(app,key):
         app.td_times = []
         app.cum_times = []
     if key == 'v':
+        for i in range(len(app.videos)):
+            if app.videos[i].path == app.videopath:
+                app.videos[i].addTimes(app.td_times,app.cum_times)
+                break
+
 
     if app.paused:
         if key == 'a':
