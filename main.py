@@ -76,6 +76,7 @@ def onAppStart(app):
 
     # Strategize
     app.activeVideo = None
+    app.timecolors = []
 
 
 
@@ -513,7 +514,26 @@ def strategizeVideo_onMousePress(app,x,y):
         if buttons[i].inButton(x, y):
             j = findAthlete(app,app.activeAthlete)
             app.activeVideo = app.athletes[j].videos[i]
+            findColors(app)
             setActiveScreen('times')
+
+def findColors(app):
+    times = app.activeVideo.times
+    if times == []: return
+    times = [float(times[i]) for i in range(len(times))]
+    colors = ['black']
+    fastest = max(times[1:])
+    slowest = min(times[1:])
+    for i in range(1,len(times)):
+        if fastest == slowest:
+            colors.append('black')
+        elif times[i] == fastest:
+            colors.append('green')
+        elif times[i] == slowest:
+            colors.append('red')
+        else:
+            colors.append('black')
+    app.timecolors = colors
 
 # Analyzes Times for a single video
 def times_redrawAll(app):
@@ -524,7 +544,7 @@ def times_redrawAll(app):
 def drawTimeAnalysis(app):
     drawRect(app.width*0.05, app.height*0.25,app.width*0.9,app.height*0.2,fill=None,border='black')
     for i in range(len(app.activeVideo.times)):
-        drawLabel(app.activeVideo.times[i],app.width*0.05 + i *200, app.height*0.35,size = 60, font = 'helvetica', align = 'left')
+        drawLabel(app.activeVideo.times[i],app.width*0.05 + i *200, app.height*0.35,size = 60, font = 'helvetica', align = 'left',fill = app.timecolors[i])
 
 def times_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
@@ -648,7 +668,7 @@ def getFrame(app):
     app.capture.set(cv2.CAP_PROP_POS_FRAMES, app.current_frame)
     ret, frame = app.capture.read()
     if not ret:
-        print('unable to read frame')
+        return
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     pil_image = im.fromarray(frame)
     cmu_image = CMUImage(pil_image)
@@ -656,6 +676,7 @@ def getFrame(app):
 
 # draws the current frame
 def drawFrame(app,img):
+    if img == None: return
     drawImage(img,0,0)
 
 # tests how long it takes to readFrames

@@ -8,8 +8,8 @@ class Video:
         self.path = path
         self.length = None
         self.thumbnail = None
-        self.times = None
-        self.cum_times = None
+        self.times = []
+        self.cum_times = []
 
     def inVideo(self,x,y):
         return (self.tx <= x <= self.tx + self.w) and (self.ty <= y <= self.ty + self.h)
