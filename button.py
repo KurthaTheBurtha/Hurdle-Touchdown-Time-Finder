@@ -9,7 +9,7 @@ class Button():
         self.athlete = None
 
     def __repr__(self):
-        return f'{self.name}-({self.tx},{self.ty}) {self.w},{self.h}'
+        return f'{self.name}'
 
     def inButton(self,x,y):
         return (self.tx <= x <= self.tx + self.w) and (self.ty <= y <= self.ty + self.h)

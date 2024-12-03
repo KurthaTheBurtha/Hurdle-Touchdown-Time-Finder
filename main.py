@@ -74,6 +74,9 @@ def onAppStart(app):
     app.input = ''
     app.activeAthlete = None
 
+    # Strategize
+    app.activeVideo = None
+
 
 
 # draws main screen
@@ -138,6 +141,7 @@ def drawVideos(app):
         drawImage(cmu_image,topX,topY)
         drawLabel(video.name,topX,topY + iy+20,align = 'left',font = 'helvetica')
         drawLabel(video.length,topX + ix,topY+iy+20, align = 'right', font = 'helvetica')
+        drawLabel(video.times, topX, topY + iy +30, align = 'left', font = 'helvetica')
         topX += ix + app.width*0.05
         cnt += 1
 
@@ -282,6 +286,17 @@ def drawAthletes(app):
         drawAthleteButtons(app,i)
         topY += app.height*0.17
 
+def drawAthletesNoButtons(app):
+    topX, topY = app.width * 0.05, app.height * 0.25
+    for i in range(len(app.athletes)):
+        athlete = app.athletes[i]
+        drawRect(topX,topY,app.width*0.9,app.height*0.15,fill=None,border = 'black')
+        drawCircle(topX+app.width*0.075,topY + app.height*0.075,50,fill=None,border = 'black')
+        drawLabel(athlete.name,topX + app.width * 0.125,topY + app.height * 0.05,size = 20, font = 'helvetica',align = 'left')
+        plural = '' if len(athlete.videos) == 1 else 's'
+        drawLabel(f'{len(athlete.videos)} video' + plural,topX + app.width * 0.125, topY + app.height * 0.1, size = 20, font = 'helvetica', align = 'left')
+        drawLabel(f'{athlete.pr}',topX + app.width * 0.4,topY + app.height * 0.05, size = 20, font = 'helvetica', align = 'right')
+        topY += app.height*0.17
 def drawAthleteButtons(app,i):
     s = app.setprs[i]
     drawRect(s.tx,s.ty,s.w,s.h,fill = None, border = 'black')
@@ -344,6 +359,7 @@ def drawAthleteVideos(app):
         drawImage(cmu_image, topX, topY)
         drawLabel(video.name, topX, topY + iy + 20, align='left', font='helvetica')
         drawLabel(video.length, topX + ix, topY + iy + 20, align='right', font='helvetica')
+        drawLabel(video.times, topX, topY + iy + 30, align='left', font='helvetica')
         topX += ix + app.width * 0.05
         cnt += 1
 def athletesVideos_onMousePress(app,x,y):
@@ -437,37 +453,36 @@ def athletesEditVideos_redrawAll(app):
 def athletesEditVideos_onMousePress(app,x,y):
     if app.buttons[3].inButton(x, y):
         setActiveScreen('athletes')
-    for button in app.videobuttons:
-        if button.inButton(x,y):
-            for i in range(len(app.athletes)):
-                if app.athletes[i].name == app.activeAthlete:
-                    b = app.videobuttons[len(app.athletes[i].videos)].copy()
-                    b.rename(button.name)
-                    app.athletes[i].addVideo(app.videos[findVideo(app,app.activeAthlete)],b)
-                    setActiveScreen('athletes')
+    for j in range(len(app.videobuttons)):
+        if app.videobuttons[j].inButton(x,y):
+            i = findAthlete(app,app.activeAthlete)
+            b = app.videobuttons[len(app.athletes[i].videos)].copy()
+            b.rename(app.videobuttons[j].name)
+            app.athletes[i].addVideo(app.videos[j],b)
+            setActiveScreen('athletes')
 
 def athletesEditVideos_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('athletes')
 
-def findVideo(app,name):
-    for i in range(len(app.videos)):
-        if app.videos[i].name == name:
+def findAthlete(app,athlete):
+    for i in range(len(app.athletes)):
+        if app.athletes[i].name == athlete:
             return i
     return -1
 
-# Strategize
+# Pick Athlete to strategize
 def strategize_redrawAll(app):
     drawHeader(app,'Strategize')
     drawButton(app,3)
-    drawVideos(app)
-
+    drawAthletesNoButtons(app)
 def strategize_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
-    for button in app.videobuttons:
-        if button.inButton(x,y):
-            pass # strategize
+    for i in range(len(app.athletebuttons)):
+        if app.athletebuttons[i].inButton(x,y):
+            app.activeAthlete = app.athletes[i].name
+            setActiveScreen('strategizeVideo')
 
 def strategize_onKeyPress(app,key):
     if key == 'q':
@@ -475,6 +490,47 @@ def strategize_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('main')
 
+# Video Selection to Strategize
+def strategizeVideo_redrawAll(app):
+    drawHeader(app,'Select Video')
+    drawButton(app,3)
+    drawAthleteVideos(app)
+
+def strategizeVideo_onKeyPress(app,key):
+    if key == 'escape':
+        setActiveScreen('strategize')
+
+def strategizeVideo_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('strategize')
+    for i in range(len(app.athletes)):
+        if app.activeAthlete == app.athletes[i].name:
+            buttons = app.athletes[i].videobuttons
+            break
+    for i in range(len(buttons)):
+        if buttons[i].inButton(x, y):
+            j = findAthlete(app,app.activeAthlete)
+            app.activeVideo = app.athletes[j].videos[i]
+            setActiveScreen('times')
+
+# Analyzes Times for a single video
+def times_redrawAll(app):
+    drawHeader(app,str(app.activeVideo))
+    drawButton(app,3)
+    drawTimeAnalysis(app)
+
+def drawTimeAnalysis(app):
+    drawRect(app.width*0.05, app.height*0.25,app.width*0.9,app.height*0.2,fill=None,border='black')
+    for i in range(len(app.activeVideo.times)):
+        drawLabel(app.activeVideo.times[i],app.width*0.05 + i *200, app.height*0.35,size = 60, font = 'helvetica', align = 'left')
+
+def times_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('strategizeVideo')
+
+def times_onKeyPress(app,key):
+    if key == 'escape':
+        setActiveScreen('strategizeVideo')
 # Video
 
 # iterates through the frames
