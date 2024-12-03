@@ -404,6 +404,8 @@ def athletesAdd_onKeyPress(app,key):
         setActiveScreen('athletes')
     elif key == 'backspace':
         app.input = app.input[:-1]
+    elif key == 'space':
+        app.input += ' '
     elif key == 'enter':
         app.athletes.append(Athlete(app.input))
         b = Button('Set PR',app.ax + app.width * 0.7,app.ay+app.height * 0.05,app.width*0.15,app.height*0.05)
@@ -573,8 +575,6 @@ def video_onKeyPress(app,key):
             if app.videos[i].path == app.video_path:
                 app.videos[i].addTimes(app.td_times,app.cum_times)
                 break
-
-
     if app.paused:
         if key == 'a':
             app.current_frame -= 1
