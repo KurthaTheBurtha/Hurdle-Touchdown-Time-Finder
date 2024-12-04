@@ -77,6 +77,23 @@ def onAppStart(app):
     # Strategize
     app.activeVideo = None
     app.timecolors = []
+    app.targettimeinput = ''
+    app.targettime = None
+    # Touchdown charts from https://hurdlesfirstbeta.com/free-articles/training-tips/touchdown-charts/
+    # Times were published in The Science of Hurdling by Brent McFarlane, Canadian Track and Field coach who specializes in hurdles
+    app.touchdown_times_cum = {12.8 : [2.4,3.4,4.3,5.2,6.2,7.2,8.2,9.2,10.3,11.4,12.8],
+                               13.0 : [2.4,3.4,4.4,5.4,6.4,7.4,8.4,9.4,10.5,11.6,13.0],
+                               13.2 : [2.5,3.5,4.4,5.4,6.4,7.4,8.5,9.6,10.7,11.8,13.2],
+                               13.6 : [2.5,3.6,4.6,5.6,6.6,7.7,8.8,9.9,11.0,12.2,13.6],
+                               14.0 : [2.5,3.6,4.6,5.7,6.8,7.9,9.0,10.1,11.2,12.4,14.0],
+                               14.4 : [2.6,3.6,4.7,5.8,6.9,8.1,9.3,10.5,11.7,12.9,14.4],
+                               14.6 : [2.6,3.7,4.7,5.8,7.0,8.2,9.4,10.6,11.8,13.0,14.6],
+                               15.0 : [2.6,3.7,4.9,6.0,7.2,8.3,9.5,10.7,12.0,13.2,15.0],
+                               15.5 : [2.7,3.8,5.0,6.2,7.4,8.6,9.8,11.0,12.3,13.6,15.5],
+                               16.0 : [2.8,3.9,5.1,6.4,7.6,8.8,10.1,11.3,12.6,14.0,16.0]}
+    app.touchdown_times = {}
+    buildTDTimes(app)
+    app.targettimebutton = Button('targettime',app.width*0.4,app.height*0.21,app.width*0.2,app.height*0.03)
 
 
 
@@ -446,7 +463,7 @@ def athletesSetPr_onKeyPress(app,key):
                     app.athletes[i].setPr(app.input)
                     break
             setActiveScreen('athletes')
-    else:
+    elif key in '1234567890.':
         app.input += key
 def athletesEditVideos_redrawAll(app):
     drawHeader(app,'Edit Videos')
@@ -517,6 +534,7 @@ def strategizeVideo_onMousePress(app,x,y):
             findColors(app)
             setActiveScreen('times')
 
+# Finds the Appropriate Colors based on Split Times
 def findColors(app):
     times = app.activeVideo.times
     if times == []: return
@@ -540,11 +558,23 @@ def times_redrawAll(app):
     drawHeader(app,str(app.activeVideo))
     drawButton(app,3)
     drawTimeAnalysis(app)
+    drawTargetTimeInput(app)
+    if app.targettime != None:
+        drawTargetTimes(app)
 
+def drawTargetTimeInput(app):
+    drawLabel(f"Input Time Here: {app.targettimeinput}",app.width*0.5, app.height*0.225,font = 'helvetica', size = 20)
+
+def drawTargetTimes(app):
+    drawLabel(f'{app.targettime}',app.width * 0.05,app.height * 0.45, size = 40, font = 'helvetica', align = 'left')
+    for i in range(len(app.touchdown_times[app.targettime])):
+        drawLabel(app.touchdown_times[app.targettime][i],app.width * 0.05 + (i+1) * (app.width*0.9/11),app.height * 0.45,size = 40, font = 'helvetica', align ='left')
+
+# draws the splits from a video
 def drawTimeAnalysis(app):
-    drawRect(app.width*0.05, app.height*0.25,app.width*0.9,app.height*0.2,fill=None,border='black')
+    drawRect(app.width*0.05, app.height*0.3,app.width*0.9,app.height*0.1,fill=None,border='black')
     for i in range(len(app.activeVideo.times)):
-        drawLabel(app.activeVideo.times[i],app.width*0.05 + i *200, app.height*0.35,size = 60, font = 'helvetica', align = 'left',fill = app.timecolors[i])
+        drawLabel(app.activeVideo.times[i],app.width*0.05 + i * (app.width*0.9/10), app.height*0.35,size = 40, font = 'helvetica', align = 'left',fill = app.timecolors[i])
 
 def times_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
@@ -553,6 +583,27 @@ def times_onMousePress(app,x,y):
 def times_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('strategizeVideo')
+    elif key in '1234567890.':
+        app.targettimeinput += key
+    elif key == 'backspace':
+        app.targettimeinput = app.input[:-1]
+    elif key == 'space':
+        app.targettimeinput += ' '
+    elif key == 'enter':
+        if not app.targettimeinput.replace('.','',1).isdigit():
+            app.targettimeinput = ''
+        else:
+            app.targettime = float(app.targettimeinput)
+            times = sorted([time for time in app.touchdown_times])[::-1]
+            print(times)
+            for time in times:
+                if app.targettime >= time:
+                    app.targettime = time
+                    break
+
+
+
+
 # Video
 
 # iterates through the frames
@@ -613,13 +664,12 @@ def video_onMousePress(app,x,y):
         else:
             setActiveScreen('athletesVideos')
 
-# draws video
 def video_redrawAll(app):
     drawFrame(app,getFrame(app))
     drawTimes(app)
     drawButton(app,3)
 
-# draws the time
+# draws the times on screen
 def drawTimes(app):
     drawRect(app.width/2-60,app.height*0.92,120,40,fill='white',border = 'black')
     drawLabel(f'{app.time:.2f}',app.width/2,app.height*0.92+20,fill='black',size = 20)
@@ -642,6 +692,15 @@ def drawTimes(app):
         
 
 ## other methods ##
+
+# builds the not cumulative target touchdown times
+def buildTDTimes(app):
+    for targettime in app.touchdown_times_cum:
+        times = app.touchdown_times_cum[targettime]
+        result = [times[0]]
+        for i in range(1,len(times)):
+            result.append(pythonRound(times[i]-times[i-1],2))
+        app.touchdown_times[targettime] = result
 
 # finds the current time in the video using the current frame and the fps
 def findTime(app):
@@ -679,32 +738,25 @@ def drawFrame(app,img):
     if img == None: return
     drawImage(img,0,0)
 
-# tests how long it takes to readFrames
-def testTime(app):
-    start = time.time()
-    readFrames(app)
-    end = rounded(time.time() - start)
-    print(end)
+# #reads all frames in the video
+# def readFrames(app):
+#     os.makedirs(app.folder_path,exist_ok=True)
+#     cnt = 0
+#     for i in range(app.frames):
+#         app.capture.set(cv2.CAP_PROP_POS_FRAMES,i)
+#         ret, frame = app.capture.read()
+#         if not ret:
+#             break
+#         cv2.imwrite(os.path.join(app.folder_path,f'{i}.bmp'),frame)
+#         cnt +=1
+#         app.frames = cnt
 
-#reads all frames in the video
-def readFrames(app):
-    os.makedirs(app.folder_path,exist_ok=True)
-    cnt = 0
-    for i in range(app.frames):
-        app.capture.set(cv2.CAP_PROP_POS_FRAMES,i)
-        ret, frame = app.capture.read()
-        if not ret:
-            break
-        cv2.imwrite(os.path.join(app.folder_path,f'{i}.bmp'),frame)
-        cnt +=1
-        app.frames = cnt
-
-# deletes frames from the 'frames' folder
-def clearFolder(app):
-    folder_path = app.folder_path
-    if os.path.exists(folder_path):
-        shutil.rmtree(folder_path)  # Deletes the folder and all contents
-        os.makedirs(folder_path)
+# # deletes frames from the 'frames' folder
+# def clearFolder(app):
+#     folder_path = app.folder_path
+#     if os.path.exists(folder_path):
+#         shutil.rmtree(folder_path)  # Deletes the folder and all contents
+#         os.makedirs(folder_path)
 
 def onClose(app):
     # clearFolder(app)
