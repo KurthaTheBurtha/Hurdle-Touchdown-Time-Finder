@@ -656,7 +656,11 @@ def makeTips(app):
         app.start = tip
     if len(times) >= 1:
         tip = Tip('middle')
-        predmid = diff[3] + diff[4] + diff[5] + diff[6]
+        predmid = 0
+        for i in range(3,7):
+            predmid += diff[i]
+            if i >= len(times):
+                break
         if predmid < -0.1:
             tip.note = 'The middle of your race is slower than expected.'
             tip.tip = 'Work on consistency over the hurdles'
