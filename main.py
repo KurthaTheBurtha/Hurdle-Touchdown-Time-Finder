@@ -6,6 +6,7 @@ import cv2  # Video Processing Library
 from button import Button  # Button Class
 from video import Video # Video Class
 from athlete import Athlete # Athlete Class
+from tip import Tip # Tip Class
 from cmu_graphics import *  # CMU Graphics
 import os # For the File Explorer
 
@@ -94,7 +95,12 @@ def onAppStart(app):
     app.touchdown_times = {}
     buildTDTimes(app)
     app.targettimebutton = Button('targettime',app.width*0.4,app.height*0.21,app.width*0.2,app.height*0.03)
+    app.userpredictedtime = None
 
+    ## Tips
+    app.start = None
+    app.middle = None
+    app.end = None
 
 
 # draws main screen
@@ -136,13 +142,13 @@ def main_onKeyPress(app,key):
         setActiveScreen('upload')
         getFiles(app)
 
-# Library
+# draws the library
 def library_redrawAll(app):
     drawHeader(app,'Library')
     drawButton(app,3)
     drawButton(app,5)
     drawVideos(app)
-
+# draws the videos within the library
 def drawVideos(app):
     topX = app.width*0.05
     topY = app.height*0.25
@@ -162,9 +168,7 @@ def drawVideos(app):
         drawLabel(video.times, topX, topY + iy +30, align = 'left', font = 'helvetica')
         topX += ix + app.width*0.05
         cnt += 1
-
-
-
+# controls the mouse clicks within the library
 def library_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
@@ -189,7 +193,7 @@ def library_onMousePress(app,x,y):
             app.recording = False
             app.fromwhere = 'library'
             setActiveScreen('video')
-
+# controls the key presses within the library
 def library_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
@@ -532,6 +536,8 @@ def strategizeVideo_onMousePress(app,x,y):
             j = findAthlete(app,app.activeAthlete)
             app.activeVideo = app.athletes[j].videos[i]
             findColors(app)
+            predictTDTimes(app)
+            makeTips(app)
             setActiveScreen('times')
 
 # Finds the Appropriate Colors based on Split Times
@@ -559,22 +565,38 @@ def times_redrawAll(app):
     drawButton(app,3)
     drawTimeAnalysis(app)
     drawTargetTimeInput(app)
+    drawPredictionTimes(app)
     if app.targettime != None:
         drawTargetTimes(app)
+    if app.start != None:
+        drawTip(app,app.start,app.height * 0.65)
+    if app.middle != None:
+        drawTip(app,app.middle,app.height * 0.75)
+    if app.end != None:
+        drawTip(app,app.end,app.height * 0.85)
 
+def drawTip(app,tip,height):
+    drawLabel(f'{tip.note}',app.width * 0.5, height, size = 30, font = 'helvetica',fill = tip.color)
+    drawLabel(f'{tip.tip}',app.width * 0.5, height + app.height *0.05, size = 30, font = 'helvetica',fill = tip.color)
 def drawTargetTimeInput(app):
     drawLabel(f"Input Time Here: {app.targettimeinput}",app.width*0.5, app.height*0.225,font = 'helvetica', size = 20)
 
+def drawPredictionTimes(app):
+    drawLabel(f'Your predicted time: {app.userpredictedtime}', app.width * 0.50, app.height *0.40, size=30, font='helvetica')
+    for i in range(len(app.touchdown_times[app.userpredictedtime])):
+        drawLabel(app.touchdown_times[app.userpredictedtime][i], app.width * 0.05 + (i) * (app.width * 0.9 / 10),
+                  app.height * 0.45, size=40, font='helvetica')
+
 def drawTargetTimes(app):
-    drawLabel(f'{app.targettime}',app.width * 0.05,app.height * 0.45, size = 40, font = 'helvetica', align = 'left')
+    drawLabel(f'Splits for this time: {app.targettime}',app.width * 0.50,app.height * 0.50, size=30, font='helvetica')
     for i in range(len(app.touchdown_times[app.targettime])):
-        drawLabel(app.touchdown_times[app.targettime][i],app.width * 0.05 + (i+1) * (app.width*0.9/11),app.height * 0.45,size = 40, font = 'helvetica', align ='left')
+        drawLabel(app.touchdown_times[app.targettime][i],app.width * 0.05 + (i) * (app.width*0.9/10),app.height * 0.55,size = 40, font = 'helvetica')
 
 # draws the splits from a video
 def drawTimeAnalysis(app):
-    drawRect(app.width*0.05, app.height*0.3,app.width*0.9,app.height*0.1,fill=None,border='black')
+    # drawRect(app.width*0.05, app.height*0.3,app.width*0.9,app.height*0.1,fill=None,border='black')
     for i in range(len(app.activeVideo.times)):
-        drawLabel(app.activeVideo.times[i],app.width*0.05 + i * (app.width*0.9/10), app.height*0.35,size = 40, font = 'helvetica', align = 'left',fill = app.timecolors[i])
+        drawLabel(app.activeVideo.times[i],app.width*0.05 + i * (app.width*0.9/10), app.height*0.35,size = 40, font = 'helvetica',fill = app.timecolors[i])
 
 def times_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
@@ -586,7 +608,7 @@ def times_onKeyPress(app,key):
     elif key in '1234567890.':
         app.targettimeinput += key
     elif key == 'backspace':
-        app.targettimeinput = app.input[:-1]
+        app.targettimeinput = app.targettimeinput[:-1]
     elif key == 'space':
         app.targettimeinput += ' '
     elif key == 'enter':
@@ -595,16 +617,73 @@ def times_onKeyPress(app,key):
         else:
             app.targettime = float(app.targettimeinput)
             times = sorted([time for time in app.touchdown_times])[::-1]
-            print(times)
             for time in times:
                 if app.targettime >= time:
                     app.targettime = time
                     break
+def predictTDTimes(app):
+    athletecumtimes = app.activeVideo.cum_times
+    splitnumber = len(athletecumtimes) - 1
+    totalusertime = athletecumtimes[splitnumber]
+    timesplit = {}
+    for time in app.touchdown_times_cum:
+        timesplit[time] = app.touchdown_times_cum[time][splitnumber]
+    diffs = {}
+    for time in timesplit:
+        diffs[time] = abs(totalusertime - timesplit[time])
+    times = sorted([diffs[time] for time in diffs])
+    for time in diffs:
+        if diffs[time] == times[0]:
+            app.userpredictedtime = time
 
-
+def makeTips(app):
+    times = [float(time) for time in app.activeVideo.times]
+    predictedtimes = app.touchdown_times[app.userpredictedtime]
+    diff = []
+    for i in range(len(times)):
+        diff.append(predictedtimes[i] - times[i])
+    if len(times) >= 3:
+        tip = Tip('start')
+        predstart = diff[0] + diff[1] + diff[2]
+        if predstart < -0.1:
+            tip.note = 'Your start is slower than expected'
+            tip.tip = 'Work on getting out of the blocks'
+            tip.color = 'red'
+        else:
+            tip.note = 'Your start is on pace for a good race'
+            tip.tip = 'Keep it up!'
+            tip.color = 'green'
+        app.start = tip
+    if len(times) >= 1:
+        tip = Tip('middle')
+        predmid = diff[3] + diff[4] + diff[5] + diff[6]
+        if predmid < -0.1:
+            tip.note = 'The middle of your race is slower than expected.'
+            tip.tip = 'Work on consistency over the hurdles'
+            tip.color = 'red'
+        else:
+            tip.note = 'The middle of your race is great!'
+            tip.tip = 'Keep going!'
+            tip.color = 'green'
+        app.middle = tip
+    if len(times) > -0.1:
+        tip = Tip('end')
+        predend = 0
+        for i in range(7,len(times)):
+            predend += diff[i]
+        if predend < 0:
+            tip.note = 'The end of your race is slower than expected.'
+            tip.tip = 'Work on sprint and hurdle endurance'
+            tip.color = 'red'
+        else:
+            tip.note = 'The end of your race is fantastic'
+            tip.tip = 'You are awesome!'
+            tip.color = 'green'
+        app.end = tip
 
 
 # Video
+
 
 # iterates through the frames
 def video_onStep(app):
@@ -737,26 +816,6 @@ def getFrame(app):
 def drawFrame(app,img):
     if img == None: return
     drawImage(img,0,0)
-
-# #reads all frames in the video
-# def readFrames(app):
-#     os.makedirs(app.folder_path,exist_ok=True)
-#     cnt = 0
-#     for i in range(app.frames):
-#         app.capture.set(cv2.CAP_PROP_POS_FRAMES,i)
-#         ret, frame = app.capture.read()
-#         if not ret:
-#             break
-#         cv2.imwrite(os.path.join(app.folder_path,f'{i}.bmp'),frame)
-#         cnt +=1
-#         app.frames = cnt
-
-# # deletes frames from the 'frames' folder
-# def clearFolder(app):
-#     folder_path = app.folder_path
-#     if os.path.exists(folder_path):
-#         shutil.rmtree(folder_path)  # Deletes the folder and all contents
-#         os.makedirs(folder_path)
 
 def onClose(app):
     # clearFolder(app)
