@@ -41,6 +41,7 @@ def onAppStart(app):
     app.cum_times = []
     app.recording = False
     app.fromwhere = 'library'
+    app.instructionbutton = Button('Instructions', 1120, app.height * 0.9-45, 250, 60)
     # app.folder_path = "frames"
 
     # Videos
@@ -110,7 +111,6 @@ def main_redrawAll(app):
     drawLabel('Finder',200,160,size = 80,font = 'helvetica',align = 'left', fill = 'white')
     for i in range(3):
         drawButton(app,i)
-    # main_drawButtons(app)
 
 # draws a button
 def drawButton(app,i):
@@ -746,11 +746,17 @@ def video_onMousePress(app,x,y):
             setActiveScreen('library')
         else:
             setActiveScreen('athletesVideos')
+    if app.instructionbutton.inButton(x,y):
+        setActiveScreen('instructions')
 
 def video_redrawAll(app):
     drawFrame(app,getFrame(app))
     drawTimes(app)
     drawButton(app,3)
+    b = app.instructionbutton
+    drawRect(b.tx, b.ty, b.w, b.h, fill='white', border='black')
+    mx, my = b.midpoint()
+    drawLabel(b.name, mx, my, font='helvetica', size=20)
 
 # draws the times on screen
 def drawTimes(app):
@@ -772,7 +778,27 @@ def drawTimes(app):
         # cumulative time
         drawRect(boxh+20,0+boxh*i,boxh,boxh,fill='white',border='black')
         drawLabel(f'{app.cum_times[i]:.2f}',boxh+20 + boxh//2,boxh//2+boxh*i,fill='black',size=20)
-        
+
+def instructions_redrawAll(app):
+    drawHeader(app,'Instructions')
+    drawButton(app,3)
+    drawInstructions(app)
+
+def drawInstructions(app):
+    drawLabel('Use \'t\' to start/recording splits',app.width*0.5, app.height*0.3,font = 'helvetica', size = 30)
+    drawLabel('Use \'p\' to pause/unpause the video',app.width*0.5, app.height*0.4,font = 'helvetica', size = 30)
+    drawLabel('Use \'a\' and \'s\' to go back and forwards a frame',app.width*0.5, app.height*0.5,font = 'helvetica', size = 30)
+    drawLabel('Use \'v\' to save the current splits to the video',app.width*0.5, app.height*0.6,font = 'helvetica', size = 30)
+    drawLabel('Use \'r\' to restart the video',app.width*0.5, app.height*0.7,font = 'helvetica', size = 30)
+    drawLabel('Use \'backspace\' to delete the most recent split',app.width*0.5, app.height*0.8,font = 'helvetica', size = 30)
+
+def instructions_onMousePress(app,x,y):
+    if app.buttons[3].inButton(x,y):
+        setActiveScreen('video')
+
+def instructions_onKeyPress(app,key):
+    if key == 'escape':
+        setActiveScreen('video')
 
 ## other methods ##
 
