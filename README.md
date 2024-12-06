@@ -8,12 +8,18 @@ cmu-graphics,
 cv2,
 Pillow
 
+Download the assets folder and put it in the top directory using the link in the assets link text file
+
 Run main.py
 
 Upload the videos you want to analyze
+
 Assign the videos to athletes
+
 Analyze the video, and save their splits with 'v'
+
 Step back and forth between frames using 'a' and 's'
+
 Use 't' to record times
 
 
