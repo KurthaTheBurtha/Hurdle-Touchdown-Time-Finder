@@ -41,4 +41,6 @@ A video analysis tool designed specifically for 110m High Hurdles in track and f
 
 15-112 Term Project
 
+Readme formatting made with ChatGPT
+
 Start analyzing your hurdle videos to find weaknesses and improve your performances now!
