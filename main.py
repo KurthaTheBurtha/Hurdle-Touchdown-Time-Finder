@@ -1,18 +1,16 @@
+# Kurt Schimmel
+# kschimme
+# Section L
+
 # Imports
-import shutil  # For Deleting Files
-import time  # For Using Time
-from PIL import Image as im
+from PIL import Image as im # Image Processing Library
 import cv2  # Video Processing Library
 from button import Button  # Button Class
 from video import Video # Video Class
 from athlete import Athlete # Athlete Class
 from tip import Tip # Tip Class
 from cmu_graphics import *  # CMU Graphics
-import os # For the File Explorer
-
-
-# openpose for pose estimation
-
+import os # File Processing Library
 
 
 # contains app variables
@@ -25,13 +23,10 @@ def onAppStart(app):
     app.stepsPerSecond = 120
 
     # Video Recording
-    app.video_path = "hurdle.mov" # change to custom input
-    app.capture = cv2.VideoCapture(app.video_path)
-    if not app.capture.isOpened():
-        print("error, video")
-        exit()
-    app.frames = int(app.capture.get(cv2.CAP_PROP_FRAME_COUNT))
-    app.fps = app.capture.get(cv2.CAP_PROP_FPS)
+    app.video_path = "" # change to custom input
+    app.capture = None
+    app.frames = 0
+    app.fps = 0
 
     # Video Screen
     app.current_frame = 0
@@ -42,7 +37,6 @@ def onAppStart(app):
     app.recording = False
     app.fromwhere = 'library'
     app.instructionbutton = Button('Instructions', 1120, app.height * 0.9-45, 250, 60)
-    # app.folder_path = "frames"
 
     # Videos
     app.buttons = [Button('Library',1120,556,250,80),
@@ -56,9 +50,6 @@ def onAppStart(app):
     app.videobuttons = []
     app.tx, app.ty = app.width * 0.05, app.height * 0.25
     app.cnt = 0
-
-    # app.videorenames = []
-
 
     # File Explorer
     app.curdir = os.getcwd()
@@ -104,7 +95,7 @@ def onAppStart(app):
     app.end = None
 
 
-# draws main screen
+# Draws the main screen
 def main_redrawAll(app):
     drawImage('assets/bg.png',0,0)
     drawLabel('Hurdle Touchdown Time',80,80,size = 80,font = 'helvetica',align = 'left', fill = 'white')
@@ -112,25 +103,26 @@ def main_redrawAll(app):
     for i in range(3):
         drawButton(app,i)
 
-# draws a button
+# Draws a button in app.buttons of index i
 def drawButton(app,i):
     b = app.buttons[i]
     drawRect(b.tx,b.ty,b.w,b.h,fill = 'white', border = 'black')
     mx,my = b.midpoint()
     drawLabel(b.name,mx,my,font = 'helvetica',size = 20)
 
+# Draws a header for a screen with name title
 def drawHeader(app,title):
     drawRect(0,0,app.width,app.height*0.2,fill='pink',border = 'black')
     drawLabel(title,app.width/2,app.height*0.1,fill='black',font = 'helvetica',size = 80)
 
-# switches to appropriate screens when buttons are pressed
+# Switches to appropriate screens from main screen when buttons are pressed
 def main_onMousePress(app,x,y):
     for i in range(3):
         b = app.buttons[i]
         if b.inButton(x,y):
             setActiveScreen(b.name.lower())
 
-# controls the main screen
+# Controls the mouse clicks on the main screen
 def main_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
@@ -142,13 +134,14 @@ def main_onKeyPress(app,key):
         setActiveScreen('upload')
         getFiles(app)
 
-# draws the library
+# Draws the library
 def library_redrawAll(app):
     drawHeader(app,'Library')
     drawButton(app,3)
     drawButton(app,5)
     drawVideos(app)
-# draws the videos within the library
+
+# Draws the videos within the library
 def drawVideos(app):
     topX = app.width*0.05
     topY = app.height*0.25
@@ -168,7 +161,8 @@ def drawVideos(app):
         drawLabel(video.times, topX, topY + iy +30, align = 'left', font = 'helvetica')
         topX += ix + app.width*0.05
         cnt += 1
-# controls the mouse clicks within the library
+
+# Controls the mouse clicks within the library
 def library_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
@@ -193,13 +187,15 @@ def library_onMousePress(app,x,y):
             app.recording = False
             app.fromwhere = 'library'
             setActiveScreen('video')
-# controls the key presses within the library
+
+# Controls the key presses within the library
 def library_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'escape':
         setActiveScreen('main')
 
+# Draws the upload screen
 def upload_redrawAll(app):
     drawHeader(app, 'Upload')
     drawButton(app, 3)
@@ -208,6 +204,7 @@ def upload_redrawAll(app):
     else:
         drawSuccess(app)
 
+# Controls the actions on the upload screen
 def upload_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y) or app.uploaded:
         app.curdir = os.getcwd()
@@ -239,6 +236,8 @@ def upload_onMousePress(app,x,y):
                         app.tX = app.width * 0.05
                         app.ty += iy + app.height * 0.05
                 break
+
+# Controls the key presses on the upload screen
 def upload_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
@@ -250,9 +249,11 @@ def upload_onKeyPress(app,key):
         goBack(app)
         getFiles(app)
 
+# Goes back a directory
 def goBack(app):
     app.curdir = os.path.dirname(app.curdir)
 
+# Draws the File Explorer on the upload page
 def drawFileExplorer(app):
     drawLabel(f'{app.curdir}',app.width*0.2,app.height*0.25-20,size = 20, font = 'helvetica', align = 'left')
     drawRect(app.width*0.2,app.height*0.25,app.width*0.6,app.height*0.70,fill=None,border='black')
@@ -263,6 +264,7 @@ def drawFileExplorer(app):
         elif is_video_file(app.curdir + '/' + file.name):
             drawImage('assets/video.png',file.tx+2,file.ty)
 
+# Draws the Success screen if a video is uploaded success
 def drawSuccess(app):
     drawLabel('Success!', app.width/2,app.height/2,size = 40, font = 'helvetica', fill = 'lightgreen')
     drawLabel(f'{app.videos[-1].name} was uploaded to library', app.width/2,app.height/2+50,size = 30, font = 'helvetica')
@@ -273,11 +275,13 @@ def is_video_file(file_path):
     _, extension = os.path.splitext(file_path)  # Extract the file extension
     return extension.lower() in VIDEO_EXTENSIONS
 
+# Draws a singular file in the file explorer
 def drawFile(app,button):
     b = button
     drawRect(b.tx,b.ty,b.w,b.h,fill=None,border='black')
     drawLabel(b.name,b.tx + 25,b.ty+9,align = 'left',font = 'helvetica',size = 18)
 
+# Gets a list of the files in the current directory the user is in
 def getFiles(app):
     files = os.listdir(app.curdir)
     cnt = 0
@@ -289,12 +293,15 @@ def getFiles(app):
     return app.files
 
 # Athletes
+
+# Draws the Athlete screen
 def athletes_redrawAll(app):
     drawHeader(app,'Athletes')
     drawButton(app,3)
     drawButton(app,6)
     drawAthletes(app)
 
+# Draws the athletes on the screen
 def drawAthletes(app):
     topX, topY = app.width * 0.05, app.height * 0.25
     for i in range(len(app.athletes)):
@@ -308,6 +315,7 @@ def drawAthletes(app):
         drawAthleteButtons(app,i)
         topY += app.height*0.17
 
+# Draws the Athletes on the strategize screen
 def drawAthletesNoButtons(app):
     topX, topY = app.width * 0.05, app.height * 0.25
     for i in range(len(app.athletes)):
@@ -319,6 +327,8 @@ def drawAthletesNoButtons(app):
         drawLabel(f'{len(athlete.videos)} video' + plural,topX + app.width * 0.125, topY + app.height * 0.1, size = 20, font = 'helvetica', align = 'left')
         drawLabel(f'{athlete.pr}',topX + app.width * 0.4,topY + app.height * 0.05, size = 20, font = 'helvetica', align = 'right')
         topY += app.height*0.17
+
+# Draws the setpr button and the edit videos button for an athlete
 def drawAthleteButtons(app,i):
     s = app.setprs[i]
     drawRect(s.tx,s.ty,s.w,s.h,fill = None, border = 'black')
@@ -329,7 +339,7 @@ def drawAthleteButtons(app,i):
     mx,my = e.midpoint()
     drawLabel(e.name,mx,my,size = 20, font = 'helvetica')
 
-
+# Controls the functions on the Athlete page
 def athletes_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
@@ -351,17 +361,20 @@ def athletes_onMousePress(app,x,y):
             app.activeAthlete = app.athletes[i].name
             setActiveScreen('athletesVideos')
 
+# Controls the key presses on the Athlete page
 def athletes_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'escape':
         setActiveScreen('main')
 
+# Draws the Athlete Video screen
 def athletesVideos_redrawAll(app):
     drawHeader(app,f'{app.activeAthlete}\'s Videos')
     drawButton(app,3)
     drawAthleteVideos(app)
 
+# Draws the videos on the Athlete Videos screen
 def drawAthleteVideos(app):
     for i in range(len(app.athletes)):
         if app.athletes[i].name == app.activeAthlete:
@@ -384,6 +397,8 @@ def drawAthleteVideos(app):
         drawLabel(video.times, topX, topY + iy + 30, align='left', font='helvetica')
         topX += ix + app.width * 0.05
         cnt += 1
+
+# Controls the mouse clicks on the Athlete Videos page
 def athletesVideos_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('athletes')
@@ -409,18 +424,23 @@ def athletesVideos_onMousePress(app,x,y):
             app.fromwhere = 'athletes'
             setActiveScreen('video')
 
+# Controls the key presses on the Athlete Video page
 def athletesVideos_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('athletes')
+
+# Draws the Add Athlete page
 def athletesAdd_redrawAll(app):
     drawHeader(app,'Add Athlete')
     drawButton(app,3)
     drawInput(app,'Athlete\'s name')
 
+# Draws the input on the Add Athlete page
 def drawInput(app,name):
     drawLabel(f'Please enter the {name}:',app.width/2,app.height*0.4,font = 'helvetica',size = 40)
     drawLabel(app.input,app.width/2,app.height * 0.5, font = 'helvetica', size = 40)
 
+# Controls the key presses on the Add Athletes page
 def athletesAdd_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('athletes')
@@ -443,16 +463,24 @@ def athletesAdd_onKeyPress(app,key):
         setActiveScreen('athletes')
     else:
         app.input += key
+
+# Controls the mouse clicks on the Add Athlete page
 def athletesAdd_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
+
+# Draws the Set PR Screen
 def athletesSetPr_redrawAll(app):
     drawHeader(app,'Set PR')
     drawButton(app,3)
     drawInput(app,'PR')
+
+# Controls the mouse clicks on the Set PR screen
 def athletesSetPr_onMousePress(app,x,y):
     if app.buttons[3].inButton(x, y):
         setActiveScreen('athletes')
+
+# Controls the key presses on the Set PR page
 def athletesSetPr_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('athletes')
@@ -469,11 +497,14 @@ def athletesSetPr_onKeyPress(app,key):
             setActiveScreen('athletes')
     elif key in '1234567890.':
         app.input += key
+
+# Draws the Edit Videos page
 def athletesEditVideos_redrawAll(app):
     drawHeader(app,'Edit Videos')
     drawButton(app,3)
     drawVideos(app)
 
+# Controls the mouse clicks on the Edit Videos page
 def athletesEditVideos_onMousePress(app,x,y):
     if app.buttons[3].inButton(x, y):
         setActiveScreen('athletes')
@@ -485,21 +516,25 @@ def athletesEditVideos_onMousePress(app,x,y):
             app.athletes[i].addVideo(app.videos[j],b)
             setActiveScreen('athletes')
 
+# Controls the key presses on the Edit Videos page
 def athletesEditVideos_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('athletes')
 
+# Finds the index of the athlete in app.athletes given an athlete name (I realize I should have used a dict for this)
 def findAthlete(app,athlete):
     for i in range(len(app.athletes)):
         if app.athletes[i].name == athlete:
             return i
     return -1
 
-# Pick Athlete to strategize
+# Draws the Strategize screen
 def strategize_redrawAll(app):
     drawHeader(app,'Strategize')
     drawButton(app,3)
     drawAthletesNoButtons(app)
+
+# Controls the mouse clicks on the Strategize page
 def strategize_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('main')
@@ -508,22 +543,25 @@ def strategize_onMousePress(app,x,y):
             app.activeAthlete = app.athletes[i].name
             setActiveScreen('strategizeVideo')
 
+# Controls the key presses on the Strategize page
 def strategize_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
     if key == 'escape':
         setActiveScreen('main')
 
-# Video Selection to Strategize
+# Draws the Strategize Video screen
 def strategizeVideo_redrawAll(app):
     drawHeader(app,'Select Video')
     drawButton(app,3)
     drawAthleteVideos(app)
 
+# Controls the key presses in Strategize Video
 def strategizeVideo_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('strategize')
 
+# Controls the mouse clicks on the Strategize Video page
 def strategizeVideo_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('strategize')
@@ -559,7 +597,7 @@ def findColors(app):
             colors.append('black')
     app.timecolors = colors
 
-# Analyzes Times for a single video
+# Draws the Time Screen
 def times_redrawAll(app):
     drawHeader(app,str(app.activeVideo))
     drawButton(app,3)
@@ -575,33 +613,40 @@ def times_redrawAll(app):
     if app.end != None:
         drawTip(app,app.end,app.height * 0.85)
 
+# Draws a single Tip
 def drawTip(app,tip,height):
     drawLabel(f'{tip.note}',app.width * 0.5, height, size = 30, font = 'helvetica',fill = tip.color)
     drawLabel(f'{tip.tip}',app.width * 0.5, height + app.height *0.05, size = 30, font = 'helvetica',fill = tip.color)
+
+# Draws the Input For the target time
 def drawTargetTimeInput(app):
     drawLabel(f"Input Time Here: {app.targettimeinput}",app.width*0.5, app.height*0.225,font = 'helvetica', size = 20)
 
+# Draws the predicted times
 def drawPredictionTimes(app):
     drawLabel(f'Your predicted time: {app.userpredictedtime}', app.width * 0.50, app.height *0.40, size=30, font='helvetica')
     for i in range(len(app.touchdown_times[app.userpredictedtime])):
         drawLabel(app.touchdown_times[app.userpredictedtime][i], app.width * 0.05 + (i) * (app.width * 0.9 / 10),
                   app.height * 0.45, size=40, font='helvetica')
 
+# Draws the target times
 def drawTargetTimes(app):
     drawLabel(f'Splits for this time: {app.targettime}',app.width * 0.50,app.height * 0.50, size=30, font='helvetica')
     for i in range(len(app.touchdown_times[app.targettime])):
         drawLabel(app.touchdown_times[app.targettime][i],app.width * 0.05 + (i) * (app.width*0.9/10),app.height * 0.55,size = 40, font = 'helvetica')
 
-# draws the splits from a video
+# Draws the user's splits
 def drawTimeAnalysis(app):
     # drawRect(app.width*0.05, app.height*0.3,app.width*0.9,app.height*0.1,fill=None,border='black')
     for i in range(len(app.activeVideo.times)):
         drawLabel(app.activeVideo.times[i],app.width*0.05 + i * (app.width*0.9/10), app.height*0.35,size = 40, font = 'helvetica',fill = app.timecolors[i])
 
+# Controls the mouse clicks on the Times page
 def times_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('strategizeVideo')
 
+# Controls the key presses on the Times page
 def times_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('strategizeVideo')
@@ -621,6 +666,8 @@ def times_onKeyPress(app,key):
                 if app.targettime >= time:
                     app.targettime = time
                     break
+
+# Predicts the rest of the user's touchdown times based on the ones they submitted
 def predictTDTimes(app):
     athletecumtimes = app.activeVideo.cum_times
     splitnumber = len(athletecumtimes) - 1
@@ -636,6 +683,7 @@ def predictTDTimes(app):
         if diffs[time] == times[0]:
             app.userpredictedtime = time
 
+# Generates tips for the user based off their times versus their predicted times
 def makeTips(app):
     times = [float(time) for time in app.activeVideo.times]
     predictedtimes = app.touchdown_times[app.userpredictedtime]
@@ -685,11 +733,9 @@ def makeTips(app):
             tip.color = 'green'
         app.end = tip
 
-
 # Video
 
-
-# iterates through the frames
+# Plays the video
 def video_onStep(app):
     if app.paused:
         pass
@@ -699,7 +745,7 @@ def video_onStep(app):
             app.current_frame -= 1
     findTime(app)
 
-# controls the key presses in the app
+# Controls the key presses in the video
 def video_onKeyPress(app,key):
     if key == 'q':
         onClose(app)
@@ -740,6 +786,7 @@ def video_onKeyPress(app,key):
                 app.current_frame -= 1
         findTime(app)
 
+# Controls the mouse clicks for the video
 def video_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         if app.fromwhere == 'library':
@@ -749,6 +796,7 @@ def video_onMousePress(app,x,y):
     if app.instructionbutton.inButton(x,y):
         setActiveScreen('instructions')
 
+# Draws the Video
 def video_redrawAll(app):
     drawFrame(app,getFrame(app))
     drawTimes(app)
@@ -758,7 +806,7 @@ def video_redrawAll(app):
     mx, my = b.midpoint()
     drawLabel(b.name, mx, my, font='helvetica', size=20)
 
-# draws the times on screen
+# Draws the times on screen for the video
 def drawTimes(app):
     drawRect(app.width/2-60,app.height*0.92,120,40,fill='white',border = 'black')
     drawLabel(f'{app.time:.2f}',app.width/2,app.height*0.92+20,fill='black',size = 20)
@@ -779,11 +827,13 @@ def drawTimes(app):
         drawRect(boxh+20,0+boxh*i,boxh,boxh,fill='white',border='black')
         drawLabel(f'{app.cum_times[i]:.2f}',boxh+20 + boxh//2,boxh//2+boxh*i,fill='black',size=20)
 
+# Draws the instructions page
 def instructions_redrawAll(app):
     drawHeader(app,'Instructions')
     drawButton(app,3)
     drawInstructions(app)
 
+# Draws the instructions
 def drawInstructions(app):
     drawLabel('Use \'t\' to start/recording splits',app.width*0.5, app.height*0.3,font = 'helvetica', size = 30)
     drawLabel('Use \'p\' to pause/unpause the video',app.width*0.5, app.height*0.4,font = 'helvetica', size = 30)
@@ -792,17 +842,19 @@ def drawInstructions(app):
     drawLabel('Use \'r\' to restart the video',app.width*0.5, app.height*0.7,font = 'helvetica', size = 30)
     drawLabel('Use \'backspace\' to delete the most recent split',app.width*0.5, app.height*0.8,font = 'helvetica', size = 30)
 
+# Controls the mouse clicks on the Instructions page
 def instructions_onMousePress(app,x,y):
     if app.buttons[3].inButton(x,y):
         setActiveScreen('video')
 
+# Controls the key presses on the Instructions page
 def instructions_onKeyPress(app,key):
     if key == 'escape':
         setActiveScreen('video')
 
 ## other methods ##
 
-# builds the not cumulative target touchdown times
+# builds the target touchdown times splits from the cumulative times
 def buildTDTimes(app):
     for targettime in app.touchdown_times_cum:
         times = app.touchdown_times_cum[targettime]
@@ -811,14 +863,14 @@ def buildTDTimes(app):
             result.append(pythonRound(times[i]-times[i-1],2))
         app.touchdown_times[targettime] = result
 
-# finds the current time in the video using the current frame and the fps
+# Finds the current time in the video using the current frame and the fps
 def findTime(app):
     current_time = app.current_frame/app.fps
     seconds = pythonRound(current_time % 60,2)
     app.time = seconds
     return seconds
 
-# finds the current touchdown time split
+# Finds the current touchdown time split in the video
 def findTDTime(app):
     time = findTime(app) - app.td_time
     app.td_time = time
@@ -831,7 +883,7 @@ def findTDTime(app):
     return time
 
 
-# gets the current frame of the video
+# Gets the current frame of the video
 def getFrame(app):
     app.capture.set(cv2.CAP_PROP_POS_FRAMES, app.current_frame)
     ret, frame = app.capture.read()
@@ -842,14 +894,15 @@ def getFrame(app):
     cmu_image = CMUImage(pil_image)
     return cmu_image
 
-# draws the current frame
+# Draws the current frame
 def drawFrame(app,img):
     if img == None: return
     drawImage(img,0,0)
 
 def onClose(app):
     # clearFolder(app)
-    app.capture.release()
+    if app.capture != None:
+        app.capture.release()
     app.quit()
 
 

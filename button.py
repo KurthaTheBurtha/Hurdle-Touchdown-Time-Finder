@@ -1,3 +1,7 @@
+# Kurt Schimmel
+# kschimme
+# Section L
+
 import copy
 class Button():
     def __init__(self,name,tx,ty,w,h):

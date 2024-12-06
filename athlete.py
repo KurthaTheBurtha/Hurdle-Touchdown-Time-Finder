@@ -1,4 +1,9 @@
+# Kurt Schimmel
+# kschimme
+# Section L
+
 class Athlete:
+    # Holds information for an Athlete
     def __init__(self,name):
         self.name = name
         self.videos = []
