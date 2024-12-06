@@ -1,27 +1,44 @@
-# Hurdle-Touchdown-Time-Finder
+# Hurdle Touchdown Time Finder
 
-A track and field video analysis tool built specifically for the 110m High Hurdles.
+A video analysis tool designed specifically for 110m High Hurdles in track and field.
 
-Install the following libraries:
+---
 
-cmu-graphics,
-cv2,
-Pillow
+## Features
+- Analyze hurdle splits with precision.
+- Assign videos to athletes for personalized tracking.
+- Easily navigate frames and record times.
 
-Download the assets folder and put it in the top directory using the link in the assets link text file
+---
 
-Create a file in the top directory named 'frame.jpg'
+## Installation
 
-Run main.py
+1. Install the required libraries:
+   - `cmu-graphics`
+   - `cv2`
+   - `Pillow`
+   - `os`
 
-Upload the videos you want to analyze
+2. Download the **assets folder**:
+   - Use the link provided in the `assets_link.txt` file.
+   - Place the folder in the top directory.
 
-Assign the videos to athletes
+3. Create a file named `frame.jpg` in the top directory.
 
-Analyze the video, and save their splits with 'v'
+---
 
-Step back and forth between frames using 'a' and 's'
+## Usage
 
-Use 't' to record times
+1. Run `main.py` in your terminal or IDE.
+2. Upload videos to analyze.
+3. Assign each video to an athlete.
+4. Use the following controls during analysis:
+   - **`a` and `s`**: Step backward and forward between frames.
+   - **`t`**: Record times.
+   - **`v`**: Save hurdle splits.
 
+---
 
+15-112 Term Project
+
+Start analyzing your hurdle videos to find weaknesses and improve your performances now!
