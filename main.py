@@ -702,13 +702,13 @@ def makeTips(app):
             tip.tip = 'Keep it up!'
             tip.color = 'green'
         app.start = tip
-    if len(times) >= 1:
+    if len(times) >= 4:
         tip = Tip('middle')
         predmid = 0
         for i in range(3,7):
-            predmid += diff[i]
             if i >= len(times):
                 break
+            predmid += diff[i]
         if predmid < -0.1:
             tip.note = 'The middle of your race is slower than expected.'
             tip.tip = 'Work on consistency over the hurdles'
@@ -718,12 +718,12 @@ def makeTips(app):
             tip.tip = 'Keep going!'
             tip.color = 'green'
         app.middle = tip
-    if len(times) > -0.1:
+    if len(times) > 7:
         tip = Tip('end')
         predend = 0
         for i in range(7,len(times)):
             predend += diff[i]
-        if predend < 0:
+        if predend < -0.1:
             tip.note = 'The end of your race is slower than expected.'
             tip.tip = 'Work on sprint and hurdle endurance'
             tip.color = 'red'
